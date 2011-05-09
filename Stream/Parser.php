@@ -1,4 +1,4 @@
-<?php // vi: set encoding=utf-8 expandtab shiftwidth=4 tabstop=4:
+<?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
 define('T_STREAM_LINE', -1); // Generic tag matching any single line of the input stream
 
@@ -9,12 +9,15 @@ class Stream_Parser
     $dependencyName = null,    // Fully qualified class identifier, defaults to get_class($this)
     $dependencies   = array(), // (dependencyName => shared properties) map before instanciation, then (dependencyName => dependency object) map after
     $callbacks      = array(), // Callbacks to be registered
-    $nextLine       = false;   // Next line of the input stream
+    $nextLine       = false,   // Next line of the input stream
+    $lineNumber     = 0;       // Line number
+
 
     private
 
     $parent,
     $parents = array(),
+    $errors  = array(),
     $registryIndex = 0,
     $callbackRegistry = array(),
     $nextRegistryIndex = 0;
@@ -38,6 +41,7 @@ class Stream_Parser
         {
             $v = array(
                 'parents',
+                'errors',
                 'nextLine',
                 'callbackRegistry',
                 'nextRegistryIndex',
@@ -90,6 +94,14 @@ class Stream_Parser
         $this->parent = $this->parents = $this->callbackRegistry = $this->dependencies = null;
     }
 
+    function getErrors()
+    {
+        ksort($this->errors);
+        $e = array();
+        foreach ($this->errors as $v) foreach ($v as $e[]) {}
+        return $e;
+    }
+
     function parseStream($stream)
     {
         // Parse the stream after recursively traversing $this->parent
@@ -98,6 +110,8 @@ class Stream_Parser
 
         // Callback registry matching loop
 
+        $this->errors = array();
+        $this->lineNumber = 1;
         $this->nextLine = fgets($stream);
         $reg =& $this->callbackRegistry;
 
@@ -126,7 +140,6 @@ class Stream_Parser
                     {
                         $t = $c[1]->$c[2]($line, $tags);
 
-                        if (false === $t) continue 3;
                         if ($t && empty($tags[$t])) continue 2;
                     }
                 }
@@ -134,7 +147,14 @@ class Stream_Parser
                 break;
             }
             while (1);
+
+            ++$this->lineNumber;
         }
+    }
+
+    protected function setError($message, $type)
+    {
+        $this->errors[(int) $this->lineNumber][] = array($message, (int) $this->lineNumber, get_class($this), $type);
     }
 
     protected function register($method = null)
