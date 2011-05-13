@@ -2,7 +2,9 @@
 
 class Stream_Parser_Echo extends Stream_Parser
 {
-    protected $callbacks = array('echoLine');
+    protected
+
+    $callbacks = array('echoLine' => T_STREAM_LINE);
 
     protected function echoLine($line)
     {

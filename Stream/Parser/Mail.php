@@ -1,12 +1,12 @@
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
-Stream_Parser::createTag('T_LOGICAL_HEADER');
+Stream_Parser::createTag('T_MAIL_HEADER');
+Stream_Parser::createTag('T_MAIL_BOUNDARY');
+Stream_Parser::createTag('T_MAIL_BODY');
 
 class Stream_Parser_Mail extends Stream_Parser
 {
     protected
-
-    $logicalHeader,
 
     $envelopeSender,
     $envelopeRecipient,
@@ -14,7 +14,7 @@ class Stream_Parser_Mail extends Stream_Parser
     $envelopeClientHelo,
     $envelopeClientHostname,
 
-    $callbacks = array('tagLogicalHeader' => T_STREAM_LINE);
+    $callbacks = array('tagHeader' => T_STREAM_LINE);
 
 
     function __construct(parent $parent, $sender = null, $recipient = null, $ip = null, $helo = null, $hostname = null)
@@ -28,24 +28,38 @@ class Stream_Parser_Mail extends Stream_Parser
         parent::__construct($parent);
     }
 
-    protected function tagLogicalHeader($line)
+    protected function tagHeader(&$line)
     {
-        static $nextLogicalHeader = '';
+        static $nextHeader = array();
 
-        "\n" === substr($line, -1) && $line = substr($line, 0, -1);
-        "\r" === substr($line, -1) && $line = substr($line, 0, -1);
-
-        $nextLogicalHeader .= $line;
+        $nextHeader[] = $line;
 
         if (!isset($this->nextLine[0]) || !(' ' === $this->nextLine[0] || "\t" === $this->nextLine[0]))
         {
-            $this->logicalHeader = $nextLogicalHeader;
-            $nextLogicalHeader = '';
+            $line = implode('', $nextHeader);
+            $nextHeader = array();
 
             if ("\n" === $this->nextLine || "\r\n" === $this->nextLine)
+            {
                 $this->unregister(array(__FUNCTION__ => T_STREAM_LINE));
+                $this->register(array('tagBoundary' => T_STREAM_LINE));
+            }
 
-            return T_LOGICAL_HEADER;
+            return T_MAIL_HEADER;
         }
+
+        return false;
+    }
+
+    protected function tagBoundary($line)
+    {
+        $this->unregister(array(__FUNCTION__ => T_STREAM_LINE));
+        $this->register(array('tagBody' => T_STREAM_LINE));
+        return T_MAIL_BOUNDARY;
+    }
+
+    protected function tagBody($line)
+    {
+        return T_MAIL_BODY;
     }
 }

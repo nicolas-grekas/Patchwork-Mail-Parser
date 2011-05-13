@@ -68,12 +68,20 @@ class Stream_Parser
 
             if (!isset($this->parents[$k]))
             {
-                return trigger_error(get_class($this) . ' failed dependency: ' . $v);
+                trigger_error(get_class($this) . " failed dependency: {$v}", E_USER_WARNING);
+                return;
             }
 
-            $this->dependencies[$v] = $this->parents[$k];
+            $parent = $this->dependencies[$v] = $this->parents[$k];
 
-            foreach ($c as $c) $this->$c =& $this->parents[$k]->$c;
+            foreach ($c as $c => $k)
+            {
+                is_int($c) && $c = $k;
+
+                property_exists($parent, $c)
+                    ? $this->$k =& $parent->$c
+                    : trigger_error(get_class($this) . " undefined property: {$v}->{$c}", E_USER_NOTICE);
+            }
         }
 
         // Keep track of parents chained parsers
@@ -121,6 +129,7 @@ class Stream_Parser
             $tags = array();
             $callbacks = array();
             $this->nextLine = fgets($stream);
+            ++$this->lineNumber;
 
             do
             {
@@ -140,6 +149,7 @@ class Stream_Parser
                     {
                         $t = $c[1]->$c[2]($line, $tags);
 
+                        if (false === $t) continue 3;
                         if ($t && empty($tags[$t])) continue 2;
                     }
                 }
@@ -147,8 +157,6 @@ class Stream_Parser
                 break;
             }
             while (1);
-
-            ++$this->lineNumber;
         }
     }
 
