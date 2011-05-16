@@ -41,7 +41,7 @@ class Stream_Parser_TesterGreylist extends Stream_Parser
 
     protected function registerResults($line)
     {
-        $this->unregister();
+        $this->unregister($this->callbacks);
 
         if (false !== $this->result && 'local-list' !== $this->results['whitelist'])
             $this->results['whitelist'] = $this->result;

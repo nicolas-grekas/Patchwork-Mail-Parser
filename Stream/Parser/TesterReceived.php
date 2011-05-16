@@ -21,7 +21,7 @@ class Stream_Parser_TesterReceived extends Stream_Parser
 
     protected function testEnvelopeClient($line)
     {
-        $this->unregister();
+        $this->unregister($this->callbacks);
 
         if ('127.0.0.1' === $this->envelopeClientIp)
         {

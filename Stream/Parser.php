@@ -94,7 +94,7 @@ class Stream_Parser
         $this->registryIndex = $this->nextRegistryIndex;
         $this->nextRegistryIndex += 1 << (PHP_INT_SIZE << 2);
 
-        empty($this->callbacks) || $this->register();
+        $this->register($this->callbacks);
     }
 
     function __destruct()
@@ -144,10 +144,11 @@ class Stream_Parser
                 foreach ($callbacks as $t => $c)
                 {
                     unset($callbacks[$t]);
+                    $matches = array();
 
-                    if (false === $c[0] || preg_match($c[0], $line))
+                    if (false === $c[0] || preg_match($c[0], $line, $matches))
                     {
-                        $t = $c[1]->$c[2]($line, $tags);
+                        $t = $c[1]->$c[2]($line, $tags, $matches);
 
                         if (false === $t) continue 3;
                         if ($t && empty($tags[$t])) continue 2;
@@ -165,19 +166,18 @@ class Stream_Parser
         $this->errors[(int) $this->lineNumber][] = array($message, (int) $this->lineNumber, get_class($this), $type);
     }
 
-    protected function register($method = null)
+    protected function register($method)
     {
         $this->callbackRegisteryApply($method, 'register');
     }
 
-    protected function unregister($method = null)
+    protected function unregister($method)
     {
         $this->callbackRegisteryApply($method, 'unregister');
     }
 
     private function callbackRegisteryApply($method, $action)
     {
-        null === $method && $method = $this->callbacks;
         is_string($method) && $method = array($method => array(T_STREAM_LINE => false));
 
         foreach ($method as $method => $tag)
