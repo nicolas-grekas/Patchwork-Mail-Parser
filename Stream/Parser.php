@@ -43,6 +43,7 @@ class Stream_Parser
                 'parents',
                 'errors',
                 'nextLine',
+                'lineNumber',
                 'callbackRegistry',
                 'nextRegistryIndex',
             );
@@ -119,7 +120,7 @@ class Stream_Parser
         // Callback registry matching loop
 
         $this->errors = array();
-        $this->lineNumber = 1;
+        $this->lineNumber = 0;
         $this->nextLine = fgets($stream);
         $reg =& $this->callbackRegistry;
 
@@ -148,7 +149,7 @@ class Stream_Parser
 
                     if (false === $c[0] || preg_match($c[0], $line, $matches))
                     {
-                        $t = $c[1]->$c[2]($line, $tags, $matches);
+                        $t = $c[1]->$c[2]($line, $matches, $tags);
 
                         if (false === $t) continue 3;
                         if ($t && empty($tags[$t])) continue 2;
