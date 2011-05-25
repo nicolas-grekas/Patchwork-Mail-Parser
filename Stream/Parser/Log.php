@@ -2,12 +2,23 @@
 
 class Stream_Parser_Log extends Stream_Parser
 {
-    protected $callbacks = array('logLine' => T_STREAM_LINE);
+    protected
+
+    $width = 50,
+    $callbacks = array('logLine' => T_STREAM_LINE);
+
+    function __construct(parent $parent, $width = null)
+    {
+        parent::__construct($parent);
+        isset($width) && $this->width = $width;
+    }
 
     protected function logLine($line, $m, $t)
     {
-        echo sprintf('% 3d', $this->lineNumber), ': ',
-            str_pad(substr(rtrim(strtr($line, "\r\n\t", '   ')), 0, 50), 50);
+        $line = strtr($line, "\r\n\t", '   ');
+        $line = substr($line, 0, $this->width);
+
+        echo sprintf("% 5d: % -{$this->width}s", $this->lineNumber, $line);
 
         unset($t[T_STREAM_LINE]);
         foreach ($t as $t) echo ' ', self::getTagName($t);

@@ -1,9 +1,13 @@
 #!/usr/bin/php -q
-<?php // vi: set encoding=utf-8 expandtab shiftwidth=4 tabstop=4:
+<?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
 require __DIR__ . '/Stream/Parser.php';
-require __DIR__ . '/Stream/Parser/Echo.php';
+require __DIR__ . '/Stream/Parser/Log.php';
 
 $parser = new Stream_Parser;
-$parser = new Stream_Parser_Echo($parser);
+
+// Put other parsers here...
+
+new Stream_Parser_Log($parser);
+
 $parser->parseStream(STDIN);
