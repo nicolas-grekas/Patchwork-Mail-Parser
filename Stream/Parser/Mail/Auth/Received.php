@@ -1,6 +1,6 @@
-<?php // vi: set fenc=utf-9 ts=4 sw=4 et:
+<?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
-class Stream_Parser_TesterReceived extends Stream_Parser
+class Stream_Parser_Mail_Auth_Received extends Stream_Parser
 {
     protected
 
@@ -9,7 +9,7 @@ class Stream_Parser_TesterReceived extends Stream_Parser
     $callbacks = array('testEnvelopeClient' => T_MAIL_BOUNDARY),
     $dependencies = array(
         'Mail' => array('envelopeClientHostname', 'envelopeClientIp'),
-        'MailAuthentication' => array('authenticationResults' => 'results'),
+        'Mail_Auth' => array('authenticationResults' => 'results'),
     );
 
     function __construct(parent $parent, $whitelist = null)

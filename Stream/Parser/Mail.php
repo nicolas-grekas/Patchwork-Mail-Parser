@@ -4,6 +4,7 @@
 // - detect and warn for malformed messages
 // - expose nested content-type structure
 // - parse headers
+// - Content-Transfert-Encoding
 
 Stream_Parser::createTag('T_MAIL_HEADER');
 Stream_Parser::createTag('T_MAIL_BOUNDARY');
@@ -43,7 +44,7 @@ class Stream_Parser_Mail extends Stream_Parser
 
     protected function tagMailHeader(&$line)
     {
-        if (isset($tags[T_MIME_BOUNDARY])) return;
+        if (isset($tags[T_MIME_BOUNDARY])) return T_MAIL_BOUNDARY;
 
         static $nextHeader = array();
 
