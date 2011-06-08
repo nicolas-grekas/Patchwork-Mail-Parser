@@ -1,9 +1,8 @@
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
 // TODO:
-// - detect and warn for malformed messages
-// - parse headers
-// - Content-Transfert-Encoding
+// - Handle Content-Transfert-Encoding on T_MAIL_BODY
+// - Detect and warn for malformed messages
 
 Stream_Parser::createTag('T_MAIL_HEADER');
 Stream_Parser::createTag('T_MAIL_BOUNDARY');
@@ -13,6 +12,12 @@ Stream_Parser::createTag('T_MIME_IGNORE');
 
 class Stream_Parser_Mail extends Stream_Parser
 {
+    const
+
+    TSPECIALS_822  = "()<>@,;:\\\".[]",
+    TSPECIALS_2045 = "()<>@,;:\\\"/[]?=";
+
+
     protected
 
     $envelopeSender,
@@ -22,22 +27,28 @@ class Stream_Parser_Mail extends Stream_Parser
     $envelopeClientHostname,
 
     $mimePart = array(
-        'parent'   => false,
-        'depth'    => 0,
-        'index'    => 0,
+        'type' => false,
+        'index' => 0,
+        'depth' => 0,
+        'parent' => false,
         'boundary' => false,
-        'contentType' => 'message/rfc822',
+        'defaultType' => false,
         'boundarySelector' => array(),
-        'defaultContentType' => false,
     ),
 
-    $contentType = 'message/rfc822',
-    $nextContentType = 'text/plain',
+    $type,
+    $header,
+    $nextType = array(
+        'top' => 'text/plain',
+        'primary' => 'text',
+        'secondary' => 'plain',
+        'params' => array(),
+    ),
 
     $callbacks = array(
-        'tagMailHeader'       => T_STREAM_LINE,
-        'extractContentType'  => array(T_MAIL_HEADER => '/^Content-Type:\s+(.*)/si'),
-        'registerContentType' => T_MAIL_BOUNDARY,
+        'tagMailHeader' => T_STREAM_LINE,
+        'catchHeader'   => T_MAIL_HEADER,
+        'registerType'  => T_MAIL_BOUNDARY,
     );
 
 
@@ -50,8 +61,20 @@ class Stream_Parser_Mail extends Stream_Parser
         $this->envelopeClientHostname = $hostname;
 
         $this->mimePart = (object) $this->mimePart;
+        $this->nextType = (object) $this->nextType;
 
         parent::__construct($parent);
+    }
+
+    protected function setNextType($topType, $params = array())
+    {
+        $t = explode('/', $topType, 2);
+        $this->nextType = (object) array(
+            'top' => $topType,
+            'primary' => $t[0],
+            'secondary' => $t[1],
+            'params' => $params,
+        );
     }
 
     protected function tagMailHeader(&$line,$m, $tags)
@@ -79,9 +102,35 @@ class Stream_Parser_Mail extends Stream_Parser
         return false;
     }
 
-    protected function extractContentType($line, $matches)
+    protected function catchHeader($line)
     {
-        $this->nextContentType = $matches[1];
+        $v = explode(':', $line, 2);
+
+        $this->header = (object) array(
+            'name'  => strtolower($v[0]),
+            'value' => preg_replace("/[ \t\r\n]*[\r\n]/", '', trim($v[1])),
+        );
+
+        if ('content-type' === $this->header->name)
+        {
+            $v = self::tokenizeHeader($this->header->value, self::TSPECIALS_2045);
+
+            if (isset($v[2]) && '/' === $v[1])
+            {
+                $type = strtolower($v[0] . $v[1] . $v[2]);
+
+                $params = array();
+                $i = 2;
+                while (1)
+                {
+                    while (isset($v[++$i]) && ';' !== $v[$i]) {}
+                    if (!isset($v[$i+3])) break;
+                    if ('=' === $v[$i+2]) $params[strtolower($v[$i+1])] = $v[$i+3];
+                }
+
+                $this->setNextType($type, $params);
+            }
+        }
     }
 
     protected function tagMailBoundary($line)
@@ -89,68 +138,74 @@ class Stream_Parser_Mail extends Stream_Parser
         $this->unregister(array(__FUNCTION__ => T_STREAM_LINE));
         $this->register(array('tagMailBody' => T_STREAM_LINE));
 
-        $this->contentType = $this->nextContentType;
-        $this->nextContentType = false;
+        $this->type = $this->nextType;
+        $this->nextType = false;
 
-        if (false === $this->mimePart->contentType)
-            $this->mimePart->contentType = $this->contentType;
+        if (false === $this->mimePart->type)
+            $this->mimePart->type = $this->type;
 
         return T_MAIL_BOUNDARY;
     }
 
-    protected function registerContentType()
+    protected function registerType()
     {
         switch (true)
         {
-        case preg_match('/^(message\/|text\/rfc822-headers)/', $this->contentType):
+        case 'message' === $this->type->primary:
+        case 'text/rfc822-headers' === $this->type->top:
             $this->registerRfc822Part();
             break;
 
-        case preg_match('/^multipart\/(.*?);.*boundary=("?)(.*)\2/si', $this->contentType, $m):
-            $this->registerMimePart($m[3], strcasecmp('digest', $m[1]) ? 'text/plain' : 'message/rfc822');
+        case 'multipart' === $this->type->primary && !empty($this->type->params['boundary']):
+            $this->registerMimePart('digest' === $this->type->secondary ? 'text/plain' : 'message/rfc822');
             break;
         }
     }
 
-    protected function registerRfc822Part($nextContentType = 'text/plain')
+    protected function registerRfc822Part($nextTopType = 'text/plain', $nextTypeParams = array())
     {
-        if (false !== $this->nextContentType)
+        if (false !== $this->nextType)
         {
-            $this->setError("Failed to set Mail->nextContentType to `{$nextContentType}`: already set to `{$this->nextContentType}`", E_USER_WARNING);
+            $this->setError("Failed to set Mail->nextType to `{$nextTopType}`: already set to `{$this->nextType->top}`", E_USER_WARNING);
             return;
         }
+
+        $this->setNextType($nextTopType, $nextTypeParams);
 
         $this->unregister(array('tagMailBody' => T_STREAM_LINE));
         $this->register(array('tagMailHeader' => T_STREAM_LINE));
-
-        $this->nextContentType = $nextContentType;
     }
 
-    protected function registerMimePart($boundary, $defaultContentType)
+    protected function registerMimePart($defaultTopType, $defaultTypeParams = array())
     {
-        if (false !== $this->nextContentType)
+        if (false !== $this->nextType)
         {
-            $this->setError("Failed to set Mail->nextContentType to `{$nextContentType}`: already set to `{$this->nextContentType}`", E_USER_WARNING);
+            $this->setError("Failed to set Mail->nextType to `{$defaultTopType}`: already set to `{$this->nextType->top}`", E_USER_WARNING);
             return;
         }
 
-        $this->unregister(array('tagMailBody' => T_STREAM_LINE));
+        if (empty($this->type->params['boundary']))
+        {
+            $this->setError("No boundary defined for the current content-type");
+            return;
+        }
 
-        $s = array(T_STREAM_LINE => '/^--(' . preg_quote($boundary, '/') . ')(--)?/');
+        $this->setNextType($defaultTopType, $defaultTypeParams);
+
+        $s = array(T_STREAM_LINE => '/^--(' . preg_quote($this->type->params['boundary'], '/') . ')(--)?/');
         $this->mimePart = (object) array(
-            'parent'   => $this->mimePart,
-            'depth'    => $this->mimePart->depth + 1,
-            'index'    => 0,
-            'boundary' => $boundary,
-            'contentType' => false,
+            'type' => false,
+            'index' => 0,
+            'depth' => $this->mimePart->depth + 1,
+            'parent' => $this->mimePart,
+            'boundary' => $this->type->params['boundary'],
+            'defaultType' => $this->nextType,
             'boundarySelector' => $s,
-            'defaultContentType' => $defaultContentType,
         );
 
+        $this->unregister(array('tagMailBody' => T_STREAM_LINE));
         $this->register(array('tagMimeBoundary' => $s));
         $this->register(array('tagMimeIgnore' => T_STREAM_LINE));
-
-        $this->nextContentType = $defaultContentType;
     }
 
     protected function tagMimeBoundary($line, $matches)
@@ -172,8 +227,8 @@ class Stream_Parser_Mail extends Stream_Parser
         if (empty($matches[2]))
         {
             ++$p->index;
-            $p->contentType = false;
-            $this->nextContentType = $p->defaultContentType;
+            $p->type = false;
+            $this->nextType = $p->defaultType;
             $this->register(array('tagMailHeader' => T_STREAM_LINE));
         }
         else
@@ -194,5 +249,61 @@ class Stream_Parser_Mail extends Stream_Parser
     protected function tagMailBody($line, $matches, $tags)
     {
         if (!isset($tags[T_MIME_BOUNDARY])) return T_MAIL_BODY;
+    }
+
+    Static function tokenizeHeader($header, $tspecial = self::TSPECIALS_822)
+    {
+        $i = -1;
+        $state = '-';
+        $tokens = array();
+
+        do
+        {
+            $token = '';
+
+            while (isset($header[++$i]))
+            {
+                $c = $header[$i];
+
+                if ('(' === $state) switch ($c)
+                {
+                case '\\': if (isset($header[++$i])) continue 2; break 2;
+                case '(' : ++$level; continue 2;
+                case ')' : if (0 === --$level) $state = '-';
+                default  : continue 2;
+                }
+
+                if ('"' === $state) switch ($c)
+                {
+                case '"' : $state = '-'; break 2;
+                case "\n": $token = rtrim($token, " \t\r\n"); continue 2;
+                case '\\': if (isset($header[++$i])) $c = $header[$i];
+                           else break 2;
+                default  : $token .= $c; continue 2;
+                }
+
+                switch ($c)
+                {
+                case '(' : $level = 1;
+                case '"' : $state = $c;
+                case ' ' : case "\t": case "\r": case "\n":
+                           if ('' !== $token) break 2;
+                           continue 2;
+                }
+
+                if (' ' > $c || false !== strpos($tspecial, $c))
+                {
+                    '' !== $token && $tokens[] = $token;
+                    $tokens[] = $c;
+                    continue 2;
+                }
+                else $token .= $c;
+            }
+
+            '' !== $token && $tokens[] = $token;
+        }
+        while (isset($header[$i]));
+
+        return $tokens;
     }
 }
