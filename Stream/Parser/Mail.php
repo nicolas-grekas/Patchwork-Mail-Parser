@@ -2,6 +2,7 @@
 
 // TODO:
 // - Handle Content-Transfert-Encoding on T_MAIL_BODY
+// - Handle RFC2047 encoded headers
 // - Detect and warn for malformed messages
 
 Stream_Parser::createTag('T_MAIL_HEADER');
@@ -20,11 +21,7 @@ class Stream_Parser_Mail extends Stream_Parser
 
     protected
 
-    $envelopeSender,
-    $envelopeRecipient,
-    $envelopeClientIp,
-    $envelopeClientHelo,
-    $envelopeClientHostname,
+    $envelope,
 
     $mimePart = array(
         'type' => false,
@@ -54,11 +51,13 @@ class Stream_Parser_Mail extends Stream_Parser
 
     function __construct(parent $parent, $sender = null, $recipient = null, $ip = null, $helo = null, $hostname = null)
     {
-        $this->envelopeSender         = $sender;
-        $this->envelopeRecipient      = $recipient;
-        $this->envelopeClientIp       = $ip;
-        $this->envelopeClientHelo     = $helo;
-        $this->envelopeClientHostname = $hostname;
+        $this->envelope = (object) array(
+            'sender'         => $sender,
+            'recipient'      => $recipient,
+            'clientIp'       => $ip,
+            'clientHelo'     => $helo,
+            'clientHostname' => $hostname,
+        );
 
         $this->mimePart = (object) $this->mimePart;
         $this->nextType = (object) $this->nextType;
@@ -81,6 +80,12 @@ class Stream_Parser_Mail extends Stream_Parser
     {
         if (isset($tags[T_MIME_BOUNDARY])) return;
 
+        if ("\n" === $line || "\r\n" === $line)
+        {
+            $this->unregister(array(__FUNCTION__ => T_STREAM_LINE));
+            return $this->tagMailBoundary($line, $m, $tags);
+        }
+
         static $nextHeader = array();
 
         $nextHeader[] = $line;
@@ -89,12 +94,6 @@ class Stream_Parser_Mail extends Stream_Parser
         {
             $line = implode('', $nextHeader);
             $nextHeader = array();
-
-            if ("\n" === $this->nextLine || "\r\n" === $this->nextLine)
-            {
-                $this->unregister(array(__FUNCTION__ => T_STREAM_LINE));
-                $this->register(array('tagMailBoundary' => T_STREAM_LINE));
-            }
 
             return T_MAIL_HEADER;
         }
@@ -108,7 +107,7 @@ class Stream_Parser_Mail extends Stream_Parser
 
         $this->header = (object) array(
             'name'  => strtolower($v[0]),
-            'value' => preg_replace("/[ \t\r\n]*[\r\n]/", '', trim($v[1])),
+            'value' => preg_replace('/[ \t\r\n]*[\r\n]/', '', trim($v[1])),
         );
 
         if ('content-type' === $this->header->name)
@@ -135,7 +134,6 @@ class Stream_Parser_Mail extends Stream_Parser
 
     protected function tagMailBoundary($line)
     {
-        $this->unregister(array(__FUNCTION__ => T_STREAM_LINE));
         $this->register(array('tagMailBody' => T_STREAM_LINE));
 
         $this->type = $this->nextType;
@@ -157,7 +155,7 @@ class Stream_Parser_Mail extends Stream_Parser
             break;
 
         case 'multipart' === $this->type->primary && !empty($this->type->params['boundary']):
-            $this->registerMimePart('digest' === $this->type->secondary ? 'text/plain' : 'message/rfc822');
+            $this->registerMimePart('digest' === $this->type->secondary ? 'message/rfc822' : 'text/plain');
             break;
         }
     }

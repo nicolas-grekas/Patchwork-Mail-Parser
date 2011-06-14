@@ -5,7 +5,7 @@ class Stream_Parser_Mail_EnvelopeHeaders extends Stream_Parser
     protected
 
     $callbacks = array('getReturnPath' => T_MAIL_HEADER),
-    $dependencies = array('Mail' => array('envelopeSender','envelopeRecipient','envelopeClientIp','envelopeClientHelo','envelopeClientHostname'));
+    $dependencies = array('Mail' => 'envelope');
 
     protected function getReturnPath($line)
     {
@@ -17,7 +17,7 @@ class Stream_Parser_Mail_EnvelopeHeaders extends Stream_Parser
             return;
         }
 
-        $this->envelopeSender = $m[1];
+        $this->envelope->sender = $m[1];
         $this->register(array('getDeliveredTo' => T_MAIL_HEADER));
     }
 
@@ -31,7 +31,7 @@ class Stream_Parser_Mail_EnvelopeHeaders extends Stream_Parser
             return;
         }
 
-        $this->envelopeRecipient = $m[1];
+        $this->envelope->recipient = $m[1];
         $this->register(array('getReceivedLine' => T_MAIL_HEADER));
     }
 
@@ -42,15 +42,15 @@ class Stream_Parser_Mail_EnvelopeHeaders extends Stream_Parser
 
         if (preg_match('/^Received: from\s+(.*?)\s+\((.*?)\s+\[(.*?)\]\)/', $line, $m))
         {
-            $this->envelopeClientHelo     = $m[1];
-            $this->envelopeClientHostname = $m[2];
-            $this->envelopeClientIp       = $m[3];
+            $this->envelope->clientHelo     = $m[1];
+            $this->envelope->clientHostname = $m[2];
+            $this->envelope->clientIp       = $m[3];
         }
         else
         {
-            $this->envelopeClientHelo     = 'localhost';
-            $this->envelopeClientHostname = 'localhost';
-            $this->envelopeClientIp       = '127.0.0.1';
+            $this->envelope->clientHelo     = 'localhost';
+            $this->envelope->clientHostname = 'localhost';
+            $this->envelope->clientIp       = '127.0.0.1';
         }
     }
 }

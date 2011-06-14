@@ -8,7 +8,7 @@ class Stream_Parser_Mail_Auth_Received extends Stream_Parser
     $whitelist,
     $callbacks = array('testEnvelopeClient' => T_MAIL_BOUNDARY),
     $dependencies = array(
-        'Mail' => array('envelopeClientHostname', 'envelopeClientIp'),
+        'Mail' => 'envelope',
         'Mail_Auth' => array('authenticationResults' => 'results'),
     );
 
@@ -23,13 +23,13 @@ class Stream_Parser_Mail_Auth_Received extends Stream_Parser
     {
         $this->unregister($this->callbacks);
 
-        if ('127.0.0.1' === $this->envelopeClientIp)
+        if ('127.0.0.1' === $this->envelope->clientIp)
         {
             $this->results['whitelist'] = 'local-host';
         }
         else foreach ($this->whitelist as $w)
         {
-            if ($w == $this->envelopeClientIp || $w == $this->envelopeClientHostname)
+            if ($w == $this->envelope->clientIp || $w == $this->envelope->clientHostname)
             {
                 $this->results['whitelist'] = 'local-list';
                 break;
