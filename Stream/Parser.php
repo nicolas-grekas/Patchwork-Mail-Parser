@@ -199,7 +199,7 @@ class Stream_Parser
 
                 foreach ($rx as $rx)
                 {
-                    if(is_int($rx))
+                    if (is_int($rx))
                     {
                         $tag = array($rx);
                         $rx  = false;
@@ -225,6 +225,19 @@ class Stream_Parser
                     }
                 }
             }
+        }
+    }
+
+    protected function unregisterAll()
+    {
+        foreach ($this->callbackRegistry as $tag => $v)
+        {
+            foreach ($v as $k => $v)
+                if ($this === $v[1])
+                    unset($this->callbackRegistry[$tag][$k]);
+
+            if (empty($this->callbackRegistry[$tag]))
+                unset($this->callbackRegistry[$tag]);
         }
     }
 

@@ -65,7 +65,7 @@ class Stream_Parser_Mail extends Stream_Parser
         parent::__construct($parent);
     }
 
-    protected function setNextType($topType, $params = array())
+    public function setNextType($topType, $params = array())
     {
         $t = explode('/', $topType, 2);
         $this->nextType = (object) array(
@@ -107,7 +107,7 @@ class Stream_Parser_Mail extends Stream_Parser
 
         $this->header = (object) array(
             'name'  => strtolower($v[0]),
-            'value' => preg_replace('/[ \t\r\n]*[\r\n]/', '', trim($v[1])),
+            'value' => preg_replace('/[ \t\r\n]*[\r\n][ \t\r\n]*/', ' ', trim($v[1])),
         );
 
         if ('content-type' === $this->header->name)
@@ -160,7 +160,7 @@ class Stream_Parser_Mail extends Stream_Parser
         }
     }
 
-    protected function registerRfc822Part($nextTopType = 'text/plain', $nextTypeParams = array())
+    public function registerRfc822Part($nextTopType = 'text/plain', $nextTypeParams = array())
     {
         if (false !== $this->nextType)
         {
@@ -174,7 +174,7 @@ class Stream_Parser_Mail extends Stream_Parser
         $this->register(array('tagMailHeader' => T_STREAM_LINE));
     }
 
-    protected function registerMimePart($defaultTopType, $defaultTypeParams = array())
+    public function registerMimePart($defaultTopType, $defaultTypeParams = array())
     {
         if (false !== $this->nextType)
         {
@@ -249,7 +249,7 @@ class Stream_Parser_Mail extends Stream_Parser
         if (!isset($tags[T_MIME_BOUNDARY])) return T_MAIL_BODY;
     }
 
-    Static function tokenizeHeader($header, $tspecial = self::TSPECIALS_822)
+    static function tokenizeHeader($header, $tspecial = self::TSPECIALS_822)
     {
         $i = -1;
         $state = '-';
