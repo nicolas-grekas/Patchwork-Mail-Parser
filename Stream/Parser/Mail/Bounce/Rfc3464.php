@@ -12,20 +12,18 @@ class Stream_Parser_Mail_Bounce_Rfc3464 extends Stream_Parser_Mail_Bounce
         'startBounceParse' => T_MAIL_BOUNDARY,
     ),
     $dependencies = array(
-        'Mail_Bounce' => array('bounceDatas' => 'results'),
+        'Mail_Bounce',
         'Mail' => array('type', 'header', 'mimePart'),
     );
 
 
     protected function startBounceParse($line)
     {
-        $this->unregister(array(__FUNCTION__ => T_MAIL_BOUNDARY));
-
-        if (1 === $this->mimePart->depth
-            && 'multipart/report' === $this->type->top
+        if ('multipart/report' === $this->type->top
             && isset($this->type->params['report-type'])
             && 0 === strcasecmp('delivery-status', $this->type->params['report-type']) )
         {
+            $this->unregister(array(__FUNCTION__ => T_MAIL_BOUNDARY));
             $this->register(array('startDsnPart' => T_MAIL_BOUNDARY));
             return $this->getExclusivity();
         }
@@ -33,7 +31,7 @@ class Stream_Parser_Mail_Bounce_Rfc3464 extends Stream_Parser_Mail_Bounce
 
     protected function startDsnPart($line)
     {
-        if (1 === $this->mimePart->depth && 'message/delivery-status' === $this->type->top)
+        if ('message/delivery-status' === $this->type->top)
         {
             $this->dependencies['Mail']->setNextType($this->type->top);
 
@@ -69,7 +67,7 @@ class Stream_Parser_Mail_Bounce_Rfc3464 extends Stream_Parser_Mail_Bounce
     {
         if (isset($this->recipient))
         {
-            $this->results[$this->recipient] = "{$this->diagnosticCode} (#{$this->status})";
+            $this->reportBounce($this->recipient, "{$this->diagnosticCode} (#{$this->status})");
         }
 
         $this->status = null;

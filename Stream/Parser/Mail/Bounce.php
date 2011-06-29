@@ -6,7 +6,8 @@ class Stream_Parser_Mail_Bounce extends Stream_Parser
 {
     protected
 
-    $bounceDatas = array(),
+    $bounceClass = 'dsn',
+    $bounceReports = array(),
     $hasExclusivity = false;
 
 
@@ -14,21 +15,34 @@ class Stream_Parser_Mail_Bounce extends Stream_Parser
     {
         parent::__construct($parent);
         $this->register(array('catchBounceExclusivity' => T_BOUNCE_EXCLUSIVITY));
+
+        if (__CLASS__ !== $c = get_class($this))
+        {
+            isset($this->dependencies['Mail_Bounce']->bounceReports)
+                ? $this->bounceReports =& $this->dependencies['Mail_Bounce']->bounceReports[$this->bounceClass][$c]
+                : user_error('Mail_Bounce dependency is not loaded');
+        }
     }
 
-    function getBouncesDatas()
+    function getBounceReports()
     {
-        return $this->bounceDatas;
+        return $this->bounceReports;
     }
 
     protected function getExclusivity()
     {
         $this->hasExclusivity = true;
+        is_array($this->bounceReports) || $this->bounceReports = array();
         return T_BOUNCE_EXCLUSIVITY;
     }
 
     protected function catchBounceExclusivity()
     {
         $this->hasExclusivity || $this->unregisterAll();
+    }
+
+    protected function reportBounce($recipient, $reason)
+    {
+        $this->bounceReports[$recipient] = $reason;
     }
 }
