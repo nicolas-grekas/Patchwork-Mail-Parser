@@ -84,7 +84,7 @@ foreach ($_SERVER['argv'] as $file)
 
             if (!$echoed)
             {
-                echo "{$file}\t\t\t{$tail}";
+                echo "{$file}\t\t\t\t{$tail}";
             }
         }
     }

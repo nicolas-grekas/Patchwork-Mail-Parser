@@ -8,6 +8,7 @@
 Stream_Parser::createTag('T_MAIL_HEADER');
 Stream_Parser::createTag('T_MAIL_BOUNDARY');
 Stream_Parser::createTag('T_MAIL_BODY');
+Stream_Parser::createTag('T_MAIL_MALFORMED');
 Stream_Parser::createTag('T_MIME_BOUNDARY');
 Stream_Parser::createTag('T_MIME_IGNORE');
 
@@ -95,7 +96,7 @@ class Stream_Parser_Mail extends Stream_Parser
             $line = implode('', $nextHeader);
             $nextHeader = array();
 
-            return T_MAIL_HEADER;
+            return preg_match('/^[\x21-\x39\x3B-\x7E]+:/', $line) ? T_MAIL_HEADER : T_MAIL_MALFORMED;
         }
 
         return false;
