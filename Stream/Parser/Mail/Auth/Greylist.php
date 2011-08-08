@@ -1,11 +1,11 @@
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
-class Stream_Parser_Mail_Auth_Greylist extends Stream_Parser
+class Stream_Parser_Mail_Auth_Greylist extends Stream_Parser_Mail_Auth
 {
     protected
 
     $result = false,
-    $results,
+    $authClass = 'whitelist',
     $pattern = array(
         'Sender IP whitelisted by DNSRBL' => 'external-list',
         'Sender IP whitelisted'           => 'local-list',
@@ -15,14 +15,14 @@ class Stream_Parser_Mail_Auth_Greylist extends Stream_Parser
         'testGreylist' => array('/^X-Greylist: /' => T_MAIL_HEADER),
         'registerResults' => T_MAIL_BOUNDARY,
     ),
-    $dependencies = array('Mail_Auth' => array('authenticationResults' => 'results'));
+    $dependencies = array('Mail_Auth');
 
 
-    function __construct(parent $parent)
+    function __construct(Stream_Parser $parent)
     {
         uksort($this->pattern, array(__CLASS__, 'strlencmp'));
         parent::__construct($parent);
-        $this->results['whitelist'] = false;
+        $this->reportAuth(false);
     }
 
     protected function testGreylist($line)
@@ -43,8 +43,8 @@ class Stream_Parser_Mail_Auth_Greylist extends Stream_Parser
     {
         $this->unregister($this->callbacks);
 
-        if (false !== $this->result && 'local-list' !== $this->results['whitelist'])
-            $this->results['whitelist'] = $this->result;
+        if (false !== $this->result && 'local-list' !== $this->authenticationResults)
+            $this->reportAuth($this->result);
     }
 
     static function strlencmp($a, $b)
