@@ -1,16 +1,14 @@
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
-class Stream_Parser_Mail_Bounce_Exim extends Stream_Parser_Mail_Bounce
+class Stream_Parser_Mail_Bounce_Exim extends Stream_Parser_Mail_Bounce_Qmail
 {
     protected
 
-    $reasons = array(),
-    $recipient,
+    $recipientRx = '/^  (\S*?@\S*)/',
 
     $callbacks = array(
         'extractHeaderRecipient' => T_MAIL_HEADER,
         'catchBoundary' => T_MAIL_BOUNDARY,
-        'endReport' => array('/^---/' => T_MAIL_BODY),
     ),
     $dependencies = array(
         'Mail_Bounce',
@@ -23,7 +21,7 @@ class Stream_Parser_Mail_Bounce_Exim extends Stream_Parser_Mail_Bounce
         if ('x-failed-recipients' === $this->header->name)
         {
             $v = explode(', ', $this->header->value);
-            foreach ($v as $v) $this->reasons[$v] = '';
+            foreach ($v as $v) $this->reportBounce($v, '');
             return $this->getExclusivity();
         }
     }
@@ -33,39 +31,13 @@ class Stream_Parser_Mail_Bounce_Exim extends Stream_Parser_Mail_Bounce
         $this->unregister(array(__FUNCTION__ => T_MAIL_BOUNDARY));
         $this->unregister(array('extractHeaderRecipient' => T_MAIL_HEADER));
 
-        if (empty($this->reasons))
+        if ($this->hasExclusivity)
         {
-            $this->unregisterAll();
+            $this->register(array('extractBodyRecipient' => T_MAIL_BODY));
         }
         else
         {
-            $this->register(array('extractBodyRecipient' => array('/^  (\S*?@\S*)/' => T_MAIL_BODY)));
+            $this->unregisterAll();
         }
-    }
-
-    protected function extractBodyRecipient($line, $matches)
-    {
-        if (isset($this->reasons[$matches[1]]))
-        {
-            $this->recipient = $matches[1];
-            $this->unregister(array('extractReason' => array('/^    /' => T_MAIL_BODY)));
-            $this->  register(array('extractReason' => array('/^    /' => T_MAIL_BODY)));
-        }
-    }
-
-    protected function extractReason($line)
-    {
-        if ('' !== $line = trim($line))
-        {
-            $this->reasons[$this->recipient] .= $line . ' ';
-        }
-    }
-
-    protected function endReport()
-    {
-        foreach ($this->reasons as $r => $s)
-            $this->reportBounce($r, rtrim($s));
-
-        $this->unregisterAll();
     }
 }

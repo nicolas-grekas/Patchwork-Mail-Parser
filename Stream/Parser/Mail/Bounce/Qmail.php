@@ -4,27 +4,42 @@ class Stream_Parser_Mail_Bounce_Qmail extends Stream_Parser_Mail_Bounce
 {
     protected
 
-    $recipient,
-    $callbacks = array(
-        'extractRecipient' => array('/^<(.*?@.*?)>/' => T_MAIL_BODY),
-    ),
-    $dependencies = array(
-        'Mail_Bounce',
-    );
+    $recipientRx = '/^<(\S*?@\S*)>(.*)/',
+    $reason = '',
+    $recipient = '',
+
+    $callbacks = array('extractBodyRecipient' => T_MAIL_BODY),
+    $dependencies = 'Mail_Bounce';
 
 
-    protected function extractRecipient($line, $matches)
+    protected function extractBodyRecipient($line)
     {
-        $this->unregister(array(__FUNCTION__ => array('/^<(.*?@.*?)>/' => T_MAIL_BODY)));
-        $this->register(array('extractStatus' => T_MAIL_BODY));
-        $this->recipient = $matches[1];
-    }
+        $next_recipient = '';
+        $new_reason = '';
 
-    protected function extractStatus($line)
-    {
-        $this->unregister(array(__FUNCTION__ => T_MAIL_BODY));
-        $this->register(array('extractRecipient' => array('/^<(.*?@.*?)>/' => T_MAIL_BODY)));
-        $this->reportBounce($this->recipient, trim($line));
+        if ('---' === substr($line, 0, 3)) //line is a boundary between the message and the original email
+        {
+            $this->unregisterAll();
+        }
+        else if (preg_match($this->recipientRx, $line, $m)) //line is an email recipient
+        {
+            $next_recipient = $m[1];
+            isset($m[2]) && $new_reason = ltrim($m[2], ': ');
+        }
+        else if ($this->recipient) //line is considered as a reason or an ending line
+        {
+            if ('' !== $line = trim($line))
+            {
+                $this->reason .= $line . ' ';
+                return;
+            }
+        }
+        else return;
+
+        if ($this->recipient)
+            $this->reportBounce($this->recipient, rtrim($this->reason));
+
+        $this->recipient = $next_recipient;
+        $this->reason = $new_reason;
     }
 }
-

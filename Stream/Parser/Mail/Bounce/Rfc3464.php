@@ -9,7 +9,7 @@ class Stream_Parser_Mail_Bounce_Rfc3464 extends Stream_Parser_Mail_Bounce
     $diagnosticCode,
 
     $callbacks = array(
-        'startBounceParse' => T_MAIL_BOUNDARY,
+        'catchBoundary' => T_MAIL_BOUNDARY,
     ),
     $dependencies = array(
         'Mail_Bounce',
@@ -17,14 +17,15 @@ class Stream_Parser_Mail_Bounce_Rfc3464 extends Stream_Parser_Mail_Bounce
     );
 
 
-    protected function startBounceParse($line)
+    protected function catchBoundary($line)
     {
+        $this->unregister(array(__FUNCTION__ => T_MAIL_BOUNDARY));
+        $this->register(array('startDsnPart' => T_MAIL_BOUNDARY));
+
         if ('multipart/report' === $this->type->top
             && isset($this->type->params['report-type'])
             && 0 === strcasecmp('delivery-status', $this->type->params['report-type']) )
         {
-            $this->unregister(array(__FUNCTION__ => T_MAIL_BOUNDARY));
-            $this->register(array('startDsnPart' => T_MAIL_BOUNDARY));
             return $this->getExclusivity();
         }
     }
@@ -54,8 +55,17 @@ class Stream_Parser_Mail_Bounce_Rfc3464 extends Stream_Parser_Mail_Bounce
             $this->status = $this->header->value;
             break;
         case 'final-recipient':
-            $v = explode(";", $this->header->value);
-            $this->recipient = trim($v[1]);
+            if ($this->recipient) break;
+        case 'original-recipient':
+            if ('<' === substr($this->header->value, 0, 1))
+            {
+                $this->recipient = trim($this->header->value, '<>');
+            }
+            else
+            {
+                $v = explode(";", $this->header->value);
+                $this->recipient = trim($v[1]);
+            }
             break;
         case 'diagnostic-code':
             $this->diagnosticCode = $this->header->value;
