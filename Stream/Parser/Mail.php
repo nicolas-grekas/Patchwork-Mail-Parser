@@ -1,7 +1,6 @@
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
 // TODO:
-// - Handle Content-Transfert-Encoding on T_MAIL_BODY
 // - Handle RFC2047 encoded headers
 // - Detect and warn for malformed messages
 
@@ -29,6 +28,7 @@ class Stream_Parser_Mail extends Stream_Parser
         'index' => 0,
         'depth' => 0,
         'parent' => false,
+        'encoding' => '7bit',
         'boundary' => false,
         'defaultType' => false,
         'boundarySelector' => array(),
@@ -36,6 +36,7 @@ class Stream_Parser_Mail extends Stream_Parser
 
     $type,
     $header,
+    $bodyLine = '',
     $nextType = array(
         'top' => 'text/plain',
         'primary' => 'text',
@@ -66,6 +67,11 @@ class Stream_Parser_Mail extends Stream_Parser
         parent::__construct($parent);
     }
 
+    function getEnvelope()
+    {
+        return clone $this->envelope;
+    }
+
     public function setNextType($topType, $params = array())
     {
         $t = explode('/', $topType, 2);
@@ -77,7 +83,7 @@ class Stream_Parser_Mail extends Stream_Parser
         );
     }
 
-    protected function tagMailHeader(&$line,$m, $tags)
+    protected function tagMailHeader(&$line, $m, $tags)
     {
         if (isset($tags[T_MIME_BOUNDARY])) return;
 
@@ -130,6 +136,10 @@ class Stream_Parser_Mail extends Stream_Parser
 
                 $this->setNextType($type, $params);
             }
+        }
+        else if ('content-transfer-encoding' === $this->header->name)
+        {
+            $this->mimePart->encoding = strtolower($this->header->value);
         }
     }
 
@@ -197,6 +207,7 @@ class Stream_Parser_Mail extends Stream_Parser
             'index' => 0,
             'depth' => $this->mimePart->depth + 1,
             'parent' => $this->mimePart,
+            'encoding' => '7bit',
             'boundary' => $this->type->params['boundary'],
             'defaultType' => $this->nextType,
             'boundarySelector' => $s,
@@ -247,7 +258,18 @@ class Stream_Parser_Mail extends Stream_Parser
 
     protected function tagMailBody($line, $matches, $tags)
     {
-        if (!isset($tags[T_MIME_BOUNDARY])) return T_MAIL_BODY;
+        if (!isset($tags[T_MIME_BOUNDARY]))
+        {
+            if ('quoted-printable' === $this->mimePart->encoding) $line = quoted_printable_decode($line);
+            else if (     'base64' === $this->mimePart->encoding) $line = base64_decode($line);
+
+            if (isset($this->type->params['charset']))
+                $line = @iconv($this->type->params['charset'], 'UTF-8//IGNORE', $line);
+
+            $this->bodyLine = $line;
+
+            return T_MAIL_BODY;
+        }
     }
 
     static function tokenizeHeader($header, $tspecial = self::TSPECIALS_822)

@@ -8,7 +8,7 @@ class Stream_Parser_Mail_Auth_MessageId extends Stream_Parser_Mail_Auth
     $callbacks = array('catchMailType' => T_MAIL_BOUNDARY),
     $dependencies = array(
         'Mail_Auth',
-        'Mail' => array('header', 'mimePart', 'envelope'),
+        'Mail' => array('header', 'mimePart', 'envelope', 'bodyLine'),
     );
 
 
@@ -24,24 +24,31 @@ class Stream_Parser_Mail_Auth_MessageId extends Stream_Parser_Mail_Auth
 
         $this->mimePart->depth
             ? $this->register(array('catchMimeId' => T_MAIL_HEADER))
-            : $this->register(array('catchMessage' => array(T_MAIL_BODY => '/^---/')));
+            : $this->register(array('catchMessage' => T_MAIL_BODY));
 
         $this->reportAuth(false);
     }
 
     protected function catchMessage($line)
     {
-        $this->unregister(array(__FUNCTION__ => array(T_MAIL_BODY => '/^---/')));
-        $this->register(array('catchMessageId' => array(T_MAIL_BODY => '/^Message-Id:\s+<(.*)>/i')));
+        if (0 === strncmp($this->bodyLine, '---', 3))
+        {
+            $this->unregister(array(__FUNCTION__ => T_MAIL_BODY));
+            $this->register(array('catchMessageId' => T_MAIL_BODY));
+        }
     }
 
-    protected function catchMessageId($line, $m)
+    protected function catchMessageId($line)
     {
-        $this->unregister(array(__FUNCTION__ => array(T_MAIL_BODY => '/^Message-Id:\s+<(.*)>/i')));
-        $this->reportMessageId($m[1]);
+        if ( 0 === strncasecmp($this->bodyLine, 'Message-Id:', 11)
+          && preg_match('/^Message-Id:\s+<(.*)>/i', $this->bodyLine, $m) )
+        {
+            $this->unregister(array(__FUNCTION__ => T_MAIL_BODY));
+            $this->reportMessageId($m[1]);
+        }
     }
 
-    protected function catchMimeId($line, $m)
+    protected function catchMimeId($line)
     {
         if ('message-id' === $this->header->name)
         {

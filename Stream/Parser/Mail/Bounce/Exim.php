@@ -12,7 +12,7 @@ class Stream_Parser_Mail_Bounce_Exim extends Stream_Parser_Mail_Bounce_Qmail
     ),
     $dependencies = array(
         'Mail_Bounce',
-        'Mail' => array('header'),
+        'Mail' => array('header', 'bodyLine'),
     );
 
 

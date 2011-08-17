@@ -9,26 +9,28 @@ class Stream_Parser_Mail_Bounce_Qmail extends Stream_Parser_Mail_Bounce
     $recipient = '',
 
     $callbacks = array('extractBodyRecipient' => T_MAIL_BODY),
-    $dependencies = 'Mail_Bounce';
-
+    $dependencies = array(
+        'Mail_Bounce',
+        'Mail' => 'bodyLine',
+    );
 
     protected function extractBodyRecipient($line)
     {
         $next_recipient = '';
         $new_reason = '';
 
-        if ('---' === substr($line, 0, 3)) //line is a boundary between the message and the original email
+        if (0 === strncmp($this->bodyLine, '---', 3)) //line is a boundary between the message and the original email
         {
             $this->unregisterAll();
         }
-        else if (preg_match($this->recipientRx, $line, $m)) //line is an email recipient
+        else if (preg_match($this->recipientRx, $this->bodyLine, $m)) //line is an email recipient
         {
             $next_recipient = $m[1];
             isset($m[2]) && $new_reason = ltrim($m[2], ': ');
         }
         else if ($this->recipient) //line is considered as a reason or an ending line
         {
-            if ('' !== $line = trim($line))
+            if ('' !== $line = trim($this->bodyLine))
             {
                 $this->reason .= $line . ' ';
                 return;

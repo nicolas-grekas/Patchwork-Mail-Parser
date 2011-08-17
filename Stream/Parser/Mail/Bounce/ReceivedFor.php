@@ -4,11 +4,15 @@ class Stream_Parser_Mail_Bounce_ReceivedFor extends Stream_Parser_Mail_Bounce
 {
     protected
 
+    $reasonLines = 10,
     $reason = '',
     $recipient = '',
 
     $callbacks = array('extractReason' => T_MAIL_BODY),
-    $dependencies = array('Mail_Bounce', 'Mail' => 'mimePart');
+    $dependencies = array(
+        'Mail_Bounce',
+        'Mail' => array('mimePart', 'bodyLine'),
+    );
 
 
     protected function extractReason($line)
@@ -17,29 +21,34 @@ class Stream_Parser_Mail_Bounce_ReceivedFor extends Stream_Parser_Mail_Bounce
         {
             $this->unregister(array(__FUNCTION__ => T_MAIL_BODY));
         }
-        else if ('---' === substr($line, 0, 3))
+        else if (0 === strncmp($this->bodyLine, '---', 3))
         {
             $this->unregister(array(__FUNCTION__ => T_MAIL_BODY));
-            $this->register(array('extractReceived' => array('/^Received: /i' => T_MAIL_BODY)));
+            $this->register(array('extractReceived' => T_MAIL_BODY));
         }
-        else if ('' !== $line = trim($line))
+        else if ($this->reasonLines > 0 && '' !== $line = trim($this->bodyLine))
         {
             $this->reason .= $line . ' ';
+            --$this->reasonLines;
         }
     }
 
     protected function extractReceived($line)
     {
-        $this->unregister(array(__FUNCTION__ => array('/^Received: /i' => T_MAIL_BODY)));
-        $this->register(array('extractReceivedFor' => T_MAIL_BODY));
-        $this->extractReceivedFor($line);
+        if ( 0 === strncasecmp($this->bodyLine, 'Received:', 9)
+          && preg_match('/^Received:\s/i', $this->bodyLine) )
+        {
+            $this->unregister(array(__FUNCTION__  => T_MAIL_BODY));
+            $this->register(array('extractReceivedFor' => T_MAIL_BODY));
+            $this->extractReceivedFor($line);
+        }
     }
 
     protected function extractReceivedFor($line)
     {
-        if (preg_match('/^(\s|Received: )/i', $line))
+        if (preg_match('/^(\s|Received: )/i', $this->bodyLine))
         {
-            if (preg_match('/^\s+for (\S*?@\S*)[^@]*$/', $line, $m))
+            if (preg_match('/^\s+for (\S*?@\S*)[^@]*$/', $this->bodyLine, $m))
                 $this->recipient = trim($m[1], '<>;');
         }
         else
