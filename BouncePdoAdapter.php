@@ -40,6 +40,34 @@ class BouncePdoAdapter
         $sql = $req->fetchColumn();
         $req->closeCursor();
 
-        return $sql;
+        return false === $sql ? null : $sql;
+    }
+
+    function recordParseResults($results)
+    {
+        if (empty($results)) return;
+
+        $sql = array();
+
+        foreach ($results as $r)
+        {
+            $s = array_map(array($this, 'quote'), $r);
+            $s = implode(',', $s);
+            $sql[] = $s;
+        }
+
+        $r = array_keys($r);
+
+        $sql = 'INSERT INTO postfix_log_bounces ('
+            . implode(',', $r) . ") VALUES\n("
+            . implode("),\n(", $sql) . ')';
+
+        $this->db->query($sql);
+    }
+
+    function quote($s)
+    {
+        if (null === $s) return 'NULL';
+        return $this->db->quote($s);
     }
 }
