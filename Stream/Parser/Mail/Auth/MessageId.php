@@ -5,6 +5,7 @@ class Stream_Parser_Mail_Auth_MessageId extends Stream_Parser_Mail_Auth
     protected
 
     $authClass = 'message-id',
+    $messageId = '',
     $callbacks = array('catchMailType' => T_MAIL_BOUNDARY),
     $dependencies = array(
         'Mail_Auth',
@@ -59,6 +60,12 @@ class Stream_Parser_Mail_Auth_MessageId extends Stream_Parser_Mail_Auth
 
     protected function reportMessageId($message_id)
     {
+        $this->messageId = $message_id;
         $this->reportAuth((int) call_user_func($this->messageIdCounter, $message_id, $this->envelope));
+    }
+
+    function getMessageId()
+    {
+        return $this->messageId;
     }
 }

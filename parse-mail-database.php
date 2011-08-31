@@ -44,7 +44,7 @@ foreach ($_SERVER['argv'] as $file)
         $auth = new Stream_Parser_Mail_Auth($parser);
         new Stream_Parser_Mail_Auth_Received($parser, $local_whitelist);
         new Stream_Parser_Mail_Auth_Greylist($parser);
-        new Stream_Parser_Mail_Auth_MessageId($parser, array($db, 'countMessageId'));
+        $omId = new Stream_Parser_Mail_Auth_MessageId($parser, array($db, 'countMessageId'));
         $boun = new Stream_Parser_Mail_Bounce($parser);
         new Stream_Parser_Mail_Bounce_Rfc3464($parser);
         new Stream_Parser_Mail_Bounce_Autoreply($parser);
@@ -65,6 +65,7 @@ foreach ($_SERVER['argv'] as $file)
         $auth = $auth->getAuthenticationResults();
         $boun = $boun->getBounceReports();
         $meId = $meId->getCatchedHeaders();
+        $omId = $omId->getMessageId();
         $meId = trim($meId['message-id'], '<>;');
 
         $auth['sent-time'] = $db->getAuthSentTime($mail->recipient, $boun);
@@ -72,6 +73,7 @@ foreach ($_SERVER['argv'] as $file)
         $results = array();
         $result_const = array(
             'bounce_message_id' => $meId,
+            'bounced_message_id' => $omId,
             'bounced_sender' => $mail->recipient,
         );
 
