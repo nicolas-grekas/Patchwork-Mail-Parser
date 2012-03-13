@@ -4,7 +4,7 @@ namespace Patchwork\Stream\Parser;
 
 use Patchwork\Stream\Parser;
 
-class Log extends Parser
+class Dumper extends Parser
 {
     protected
 

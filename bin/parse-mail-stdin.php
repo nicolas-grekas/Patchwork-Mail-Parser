@@ -22,7 +22,7 @@ new Bounce\Qmail($parser);
 new Bounce\Exim($parser);
 new Bounce\ReceivedFor($parser);
 
-//new Parser\Log($parser);
+//new Parser\Dumper($parser);
 
 $parser->parseStream(STDIN);
 
