@@ -6,14 +6,14 @@
  * This file is collecting values of the envelope and record them in mail.php
  * @author Sebastien Lavallee
  * @version 1.0
- * @package Stream/Parser/Mail
+ * @package Patchwork/Stream/Parser/Mail
  */
 
 /**
  * This page gets the content of the envelope header
  */
 
-class Stream_Parser_Mail_EnvelopeHeaders extends Stream_Parser
+class Patchwork_Stream_Parser_Mail_EnvelopeHeaders extends Patchwork_Stream_Parser
 {
     protected
 

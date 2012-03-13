@@ -2,25 +2,28 @@
 
 define('T_STREAM_LINE', -1); // Generic tag matching any single line of the input stream
 
-class Stream_Parser
+class Patchwork_Stream_Parser
 {
     protected
 
-    $dependencyName = null,    // Fully qualified class identifier, defaults to get_class($this)
-    $dependencies   = array(), // (dependencyName => shared properties) map before instanciation, then (dependencyName => dependency object) map after
-    $callbacks      = array(), // Callbacks to be registered
-    $nextLine       = false,   // Next line of the input stream
-    $lineNumber     = 0;       // Line number
+    $serviceName = null,      // Fully qualified class identifier, defaults to get_class($this)
+    $dependencies = array(    // (serviceName => shared properties) map before instanciation
+                          ),  // (serviceName => service provider object) map after
+    $callbacks = array(),     // Callbacks to register
+    $nextLine = false,        // Next line of the input stream
+    $lineNumber = 0;          // Line number
 
 
     private
 
-    $parent,
     $parents = array(),
-    $errors  = array(),
+    $errors = array(),
+    $nextRegistryIndex = 0,
+
+    $parent,
     $registryIndex = 0,
-    $callbackRegistry = array(),
-    $nextRegistryIndex = 0;
+    $callbackRegistry = array();
+
 
     protected static
 
@@ -31,7 +34,7 @@ class Stream_Parser
     {
         $parent || $parent = __CLASS__ === get_class($this) ? $this : new self;
 
-        $this->dependencyName || $this->dependencyName = get_class($this);
+        $this->serviceName || $this->serviceName = get_class($this);
         $this->dependencies = (array) $this->dependencies;
         $this->parent = $parent;
 
@@ -52,7 +55,7 @@ class Stream_Parser
         }
         else $this->nextRegistryIndex = -1 - PHP_INT_MAX;
 
-        // Verify and set $this->dependencies to the (dependencyName => dependency object) map
+        // Verify and set $this->dependencies to the (serviceName => service provider object) map
 
         foreach ($this->dependencies as $k => $v)
         {
@@ -69,7 +72,7 @@ class Stream_Parser
 
             if (!isset($this->parents[$k]))
             {
-                trigger_error(get_class($this) . " failed dependency: {$v}", E_USER_WARNING);
+                user_error(get_class($this) . " failed dependency: {$v}", E_USER_WARNING);
                 return;
             }
 
@@ -79,15 +82,14 @@ class Stream_Parser
             {
                 is_int($c) && $c = $k;
 
-                property_exists($parent, $c)
-                    ? $this->$k =& $parent->$c
-                    : trigger_error(get_class($this) . " undefined property: {$v}->{$c}", E_USER_NOTICE);
+                if (property_exists($parent, $c)) $this->$k =& $parent->$c;
+                else user_error(get_class($this) . " undefined property: {$v}->{$c}", E_USER_NOTICE);
             }
         }
 
         // Keep track of parents chained parsers
 
-        $k = strtolower($this->dependencyName);
+        $k = strtolower($this->serviceName);
         $this->parents[$k] = $this;
 
         // Keep parsers chaining order for callbacks ordering
@@ -132,7 +134,7 @@ class Stream_Parser
             $this->nextLine = fgets($stream);
             ++$this->lineNumber;
 
-            do
+            for (;;)
             {
                 $tags[$t] = $t;
 
@@ -142,42 +144,53 @@ class Stream_Parser
                     ksort($callbacks);
                 }
 
-                foreach ($callbacks as $t => $c)
+                foreach ($callbacks as $k => $c)
                 {
-                    unset($callbacks[$t]);
+                    unset($callbacks[$k]);
                     $matches = array();
 
                     if (false === $c[0] || preg_match($c[0], $line, $matches))
                     {
-                        $t = $c[1]->$c[2]($line, $matches, $tags);
+                        if ($k < 0)
+                        {
+                            $t = $c[1]->$c[2]($line, $matches, $tags);
 
-                        if (false === $t) continue 3;
-                        if ($t && empty($tags[$t])) continue 2;
+                            if (false === $t) continue 3;
+                            if ($t && empty($tags[$t])) continue 2;
+                        }
+                        else if (null !== $c[0]->$c[1]($line, $matches, $tags))
+                        {
+                            user_error("No return value is expected for tilde-registered callback: " . get_class($c[0]) . '->' . $c[1] . '()', E_USER_NOTICE);
+                        }
                     }
                 }
 
                 break;
             }
-            while (1);
         }
     }
 
     protected function setError($message, $type)
     {
-        $this->errors[(int) $this->lineNumber][] = array($message, (int) $this->lineNumber, get_class($this), $type);
+        $this->errors[(int) $this->line][] = array(
+            'type' => $type,
+            'message' => $message,
+            'line' => (int) $this->lineNumber,
+            'parser' => get_class($this),
+        );
     }
 
     protected function register($method)
     {
-        $this->callbackRegisteryApply($method, 'register');
+        $this->callbackRegisteryApply($method, true);
     }
 
     protected function unregister($method)
     {
-        $this->callbackRegisteryApply($method, 'unregister');
+        $this->callbackRegisteryApply($method, false);
     }
 
-    private function callbackRegisteryApply($method, $action)
+    private function callbackRegisteryApply($method, $register)
     {
         is_string($method) && $method = array($method => array(T_STREAM_LINE => false));
 
@@ -189,6 +202,13 @@ class Stream_Parser
                 $tag = array(T_STREAM_LINE => false);
             }
             else if (is_int($tag)) $tag = array($tag => false);
+
+            if ('~' === $method[0])
+            {
+                $desc = -1;
+                $method = substr($method, 1);
+            }
+            else $desc = 0;
 
             foreach ($tag as $tag => $rx)
             {
@@ -202,21 +222,21 @@ class Stream_Parser
                     if (is_int($rx))
                     {
                         $tag = array($rx);
-                        $rx  = false;
+                        $rx = false;
                     }
                     else $tag = $t;
 
                     foreach ($tag as $tag)
                     {
-                        if ('register' === $action)
+                        if ($register)
                         {
-                            $this->callbackRegistry[$tag][++$this->registryIndex] = array($rx, $this, $method);
+                            $this->callbackRegistry[$tag][++$this->registryIndex ^ $desc] = array($rx, $this, $method);
                         }
-                        else if ('unregister' === $action)
+                        else
                         {
                             if (isset($this->callbackRegistry[$tag]))
                                 foreach ($this->callbackRegistry[$tag] as $k => $v)
-                                    if (array($rx, $this, $method) === $v)
+                                    if (array($rx, $this, $method) === $v && ($desc ? $k > 0 : $k < 0))
                                         unset($this->callbackRegistry[$tag][$k]);
 
                             if (empty($this->callbackRegistry[$tag]))
@@ -245,7 +265,7 @@ class Stream_Parser
     {
         static $tag = T_STREAM_LINE;
         defined($name) ? $tag = constant($name) : define($name, --$tag);
-        if (isset(self::$tagNames[$tag])) trigger_error("Overwriting an already created tag value is forbidden ({$name}={$tag})", E_USER_ERROR);
+        if (isset(self::$tagNames[$tag])) user_error("Overwriting an already created tag value is forbidden ({$name}={$tag})", E_USER_WARNING);
         else self::$tagNames[$tag] = $name;
     }
 

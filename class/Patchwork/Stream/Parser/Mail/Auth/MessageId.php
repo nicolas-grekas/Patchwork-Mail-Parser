@@ -1,6 +1,6 @@
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
-class Stream_Parser_Mail_Auth_MessageId extends Stream_Parser_Mail_Auth
+class Patchwork_Stream_Parser_Mail_Auth_MessageId extends Patchwork_Stream_Parser_Mail_Auth
 {
     protected
 
@@ -13,7 +13,7 @@ class Stream_Parser_Mail_Auth_MessageId extends Stream_Parser_Mail_Auth
     );
 
 
-    function __construct(Stream_Parser $parent, $message_id_counter)
+    function __construct(Patchwork_Stream_Parser $parent, $message_id_counter)
     {
         parent::__construct($parent);
         $this->messageIdCounter = $message_id_counter;

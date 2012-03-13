@@ -1,6 +1,6 @@
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
-class Stream_Parser_Mail_Bounce_Exim extends Stream_Parser_Mail_Bounce_Qmail
+class Patchwork_Stream_Parser_Mail_Bounce_Exim extends Patchwork_Stream_Parser_Mail_Bounce_Qmail
 {
     protected
 

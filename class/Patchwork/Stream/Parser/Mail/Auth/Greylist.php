@@ -1,6 +1,6 @@
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
-class Stream_Parser_Mail_Auth_Greylist extends Stream_Parser_Mail_Auth
+class Patchwork_Stream_Parser_Mail_Auth_Greylist extends Patchwork_Stream_Parser_Mail_Auth
 {
     protected
 
@@ -18,7 +18,7 @@ class Stream_Parser_Mail_Auth_Greylist extends Stream_Parser_Mail_Auth
     $dependencies = array('Mail_Auth');
 
 
-    function __construct(Stream_Parser $parent)
+    function __construct(Patchwork_Stream_Parser $parent)
     {
         uksort($this->pattern, array(__CLASS__, 'strlencmp'));
         parent::__construct($parent);

@@ -6,14 +6,14 @@
  * This file forward the stream to sendmail
  * @author Sebastien Lavallee
  * @version 1.0
- * @package Stream/Parser
+ * @package Patchwork/Stream/Parser
  */
 
 /**
  * This page get the stream to forward it to an other process' stdin
  */
 
-class Stream_Parser_StreamForwarder extends Stream_Parser
+class Patchwork_Stream_Parser_StreamForwarder extends Patchwork_Stream_Parser
 {
     protected
 
@@ -28,8 +28,6 @@ class Stream_Parser_StreamForwarder extends Stream_Parser
     }
 
     /**
-     *
-     *
      * @param string $line
      *  Input string to be written
      */

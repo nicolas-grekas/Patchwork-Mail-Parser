@@ -1,10 +1,9 @@
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
-class Stream_Parser_Mail_Auth_Received extends Stream_Parser_Mail_Auth
+class Patchwork_Stream_Parser_Mail_Auth_Received extends Patchwork_Stream_Parser_Mail_Auth
 {
     protected
 
-    $results,
     $whitelist,
     $authClass = 'whitelist',
     $callbacks = array('testEnvelopeClient' => T_MAIL_BOUNDARY),
@@ -13,7 +12,7 @@ class Stream_Parser_Mail_Auth_Received extends Stream_Parser_Mail_Auth
         'Mail_Auth',
     );
 
-    function __construct(Stream_Parser $parent, $whitelist = null)
+    function __construct(Patchwork_Stream_Parser $parent, $whitelist = null)
     {
         $this->whitelist = $whitelist;
         parent::__construct($parent);

@@ -6,18 +6,18 @@
  * This file is collecting message headers
  * @author Sebastien Lavallee
  * @version 1.0
- * @package Stream/Parser/Mail
+ * @package Patchwork/Stream/Parser/Mail
  */
 
 /**
  * This page get the value of requested headers
  */
 
-class Stream_Parser_Mail_HeaderCatcher extends Stream_Parser
+class Patchwork_Stream_Parser_Mail_HeaderCatcher extends Patchwork_Stream_Parser
 {
     protected
 
-    $catchedHeaders = array(),
+    $caughtHeaders = array(),
     $callbacks = array(
         'catchHeader' => T_MAIL_HEADER,
         'unregisterAll' => T_MAIL_BOUNDARY,
@@ -30,20 +30,20 @@ class Stream_Parser_Mail_HeaderCatcher extends Stream_Parser
         if ($headers)
         {
             parent::__construct($parent);
-            foreach ($headers as $h) $this->catchedHeaders[$h] = false;
+            foreach ($headers as $h) $this->caughtHeaders[$h] = false;
         }
     }
 
     protected function catchHeader()
     {
-        if (isset($this->catchedHeaders[$this->header->name]))
+        if (isset($this->caughtHeaders[$this->header->name]))
         {
-            $this->catchedHeaders[$this->header->name] = $this->header->value;
+            $this->caughtHeaders[$this->header->name] = $this->header->value;
         }
     }
 
-    function getCatchedHeaders()
+    function getCaughtHeaders()
     {
-       return $this->catchedHeaders;
+       return $this->caughtHeaders;
     }
 }

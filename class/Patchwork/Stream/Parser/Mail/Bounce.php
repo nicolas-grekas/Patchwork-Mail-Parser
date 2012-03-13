@@ -1,8 +1,8 @@
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
-Stream_Parser::createTag('T_BOUNCE_EXCLUSIVITY');
+Patchwork_Stream_Parser::createTag('T_BOUNCE_EXCLUSIVITY');
 
-class Stream_Parser_Mail_Bounce extends Stream_Parser
+class Patchwork_Stream_Parser_Mail_Bounce extends Patchwork_Stream_Parser
 {
     protected
 

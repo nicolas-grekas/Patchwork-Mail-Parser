@@ -10,31 +10,31 @@
  * @todo Extract information about the final recipient from the DSN when the original recipient is forwarded. See for eg. X-Actual-Recipient.
  * @author Sebastien Lavallee
  * @version 1.0
- * @package Stream/Parser
+ * @package Patchwork/Stream/Parser
  */
 
 /**
  * Tag matching header line in a email
  */
 
-Stream_Parser::createTag('T_MAIL_HEADER');
-Stream_Parser::createTag('T_MAIL_BOUNDARY');
-Stream_Parser::createTag('T_MAIL_BODY');
-Stream_Parser::createTag('T_MAIL_MALFORMED');
-Stream_Parser::createTag('T_MIME_BOUNDARY');
-Stream_Parser::createTag('T_MIME_IGNORE');
+Patchwork_Stream_Parser::createTag('T_MAIL_HEADER');
+Patchwork_Stream_Parser::createTag('T_MAIL_BOUNDARY');
+Patchwork_Stream_Parser::createTag('T_MAIL_BODY');
+Patchwork_Stream_Parser::createTag('T_MAIL_MALFORMED');
+Patchwork_Stream_Parser::createTag('T_MIME_BOUNDARY');
+Patchwork_Stream_Parser::createTag('T_MIME_IGNORE');
 
 /**
  * This page recognise a file as an email and tag the lines as header, body etc...
  * Following the rfc822 and mime messages
  */
 
-class Stream_Parser_Mail extends Stream_Parser
+class Patchwork_Stream_Parser_Mail extends Patchwork_Stream_Parser
 {
     const
 
-    TSPECIALS_822  = "()<>@,;:\\\".[]",
-    TSPECIALS_2045 = "()<>@,;:\\\"/[]?=";
+    TSPECIALS_822  = '()<>@,;:\\".[]',
+    TSPECIALS_2045 = '()<>@,;:\\"/[]?=';
 
 
     protected

@@ -1,31 +1,23 @@
 #!/usr/bin/php -q
-<?php // vi: set encoding=utf-8 expandtab shiftwidth=4 tabstop=4:
+<?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
+ini_set('display_errors', false);
+ini_set('log_errors', true);
+ini_set('error_log', 'php://stderr');
 error_reporting(E_ALL | E_STRICT);
-ini_set('display_errors', 'stderr');
+function_exists('xdebug_disable') and xdebug_disable();
 
-require __DIR__ . '/Stream/Parser.php';
-require __DIR__ . '/Stream/Parser/Log.php';
-require __DIR__ . '/Stream/Parser/Mail.php';
-require __DIR__ . '/Stream/Parser/Mail/Auth.php';
-require __DIR__ . '/Stream/Parser/Mail/Bounce.php';
-require __DIR__ . '/Stream/Parser/Mail/EnvelopeHeaders.php';
-require __DIR__ . '/Stream/Parser/Mail/Auth/Received.php';
-require __DIR__ . '/Stream/Parser/Mail/Auth/Greylist.php';
-require __DIR__ . '/Stream/Parser/Mail/Auth/MessageId.php';
-require __DIR__ . '/Stream/Parser/Mail/Bounce/Rfc3464.php';
-require __DIR__ . '/Stream/Parser/Mail/Bounce/Autoreply.php';
-require __DIR__ . '/Stream/Parser/Mail/Bounce/Qmail.php';
-require __DIR__ . '/Stream/Parser/Mail/Bounce/Exim.php';
-require __DIR__ . '/Stream/Parser/Mail/Bounce/ReceivedFor.php';
-
-require __DIR__ . '/BouncePdoAdapter.php';
+function __autoload($class)
+{
+    $class = str_replace(array('\\', '_'), array('/', '/'), $class);
+    require dirname(__DIR__) . '/class/' . $class . '.php';
+}
 
 $local_whitelist = array(
 );
 
 $db = new PDO('mysql:host=localhost;dbname=bounces', 'root', 'hp');
-$db = new BouncePdoAdapter($db);
+$db = new Patchwork_BouncePdoAdapter($db);
 
 unset($_SERVER['argv'][0]);
 
@@ -33,19 +25,19 @@ foreach ($_SERVER['argv'] as $file)
 {
     if (false !== $h = fopen($file, 'r'))
     {
-        $parser = new Stream_Parser;
-        $mail = new Stream_Parser_Mail($parser);
-        new Stream_Parser_Mail_EnvelopeHeaders($parser);
-        $auth = new Stream_Parser_Mail_Auth($parser);
-        new Stream_Parser_Mail_Auth_Received($parser, $local_whitelist);
-        new Stream_Parser_Mail_Auth_Greylist($parser);
-        new Stream_Parser_Mail_Auth_MessageId($parser, array($db, 'countMessageId'));
-        $boun = new Stream_Parser_Mail_Bounce($parser);
-        new Stream_Parser_Mail_Bounce_Rfc3464($parser);
-        new Stream_Parser_Mail_Bounce_Autoreply($parser);
-        new Stream_Parser_Mail_Bounce_Qmail($parser);
-        new Stream_Parser_Mail_Bounce_Exim($parser);
-        new Stream_Parser_Mail_Bounce_ReceivedFor($parser);
+        $parser = new Patchwork_Stream_Parser;
+        $mail = new Patchwork_Stream_Parser_Mail($parser);
+        new Patchwork_Stream_Parser_Mail_EnvelopeHeaders($parser);
+        $auth = new Patchwork_Stream_Parser_Mail_Auth($parser);
+        new Patchwork_Stream_Parser_Mail_Auth_Received($parser, $local_whitelist);
+        new Patchwork_Stream_Parser_Mail_Auth_Greylist($parser);
+        new Patchwork_Stream_Parser_Mail_Auth_MessageId($parser, array($db, 'countMessageId'));
+        $boun = new Patchwork_Stream_Parser_Mail_Bounce($parser);
+        new Patchwork_Stream_Parser_Mail_Bounce_Rfc3464($parser);
+        new Patchwork_Stream_Parser_Mail_Bounce_Autoreply($parser);
+        new Patchwork_Stream_Parser_Mail_Bounce_Qmail($parser);
+        new Patchwork_Stream_Parser_Mail_Bounce_Exim($parser);
+        new Patchwork_Stream_Parser_Mail_Bounce_ReceivedFor($parser);
 
         file_put_contents('php://stderr', $file . "\n");
 
