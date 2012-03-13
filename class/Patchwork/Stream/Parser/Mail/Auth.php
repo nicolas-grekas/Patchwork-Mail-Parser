@@ -1,6 +1,10 @@
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
-class Patchwork_Stream_Parser_Mail_Auth extends Patchwork_Stream_Parser
+namespace Patchwork\Stream\Parser\Mail;
+
+use Patchwork\Stream\Parser;
+
+class Auth extends Parser
 {
     protected
 
@@ -14,9 +18,9 @@ class Patchwork_Stream_Parser_Mail_Auth extends Patchwork_Stream_Parser
 
         if (__CLASS__ !== get_class($this))
         {
-            isset($this->dependencies['Mail_Auth']->authenticationResults)
-                ? $this->authenticationResults =& $this->dependencies['Mail_Auth']->authenticationResults[$this->authClass]
-                : user_error('Mail_Auth dependency is not loaded');
+            isset($this->dependencies['Mail\Auth']->authenticationResults)
+                ? $this->authenticationResults =& $this->dependencies['Mail\Auth']->authenticationResults[$this->authClass]
+                : user_error(__CLASS__ . ' dependency is not loaded');
         }
     }
 

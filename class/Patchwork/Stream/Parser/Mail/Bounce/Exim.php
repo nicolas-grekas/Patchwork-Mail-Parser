@@ -1,6 +1,8 @@
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
-class Patchwork_Stream_Parser_Mail_Bounce_Exim extends Patchwork_Stream_Parser_Mail_Bounce_Qmail
+namespace Patchwork\Stream\Parser\Mail\Bounce;
+
+class Exim extends Qmail
 {
     protected
 
@@ -11,7 +13,7 @@ class Patchwork_Stream_Parser_Mail_Bounce_Exim extends Patchwork_Stream_Parser_M
         'catchBoundary' => T_MAIL_BOUNDARY,
     ),
     $dependencies = array(
-        'Mail_Bounce',
+        'Mail\Bounce',
         'Mail' => array('header', 'bodyLine'),
     );
 

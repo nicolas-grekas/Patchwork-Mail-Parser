@@ -9,11 +9,15 @@
  * @package Patchwork/Stream/Parser/Mail
  */
 
+namespace Patchwork\Stream\Parser\Mail;
+
+use Patchwork\Stream\Parser;
+
 /**
  * This page gets the content of the envelope header
  */
 
-class Patchwork_Stream_Parser_Mail_EnvelopeHeaders extends Patchwork_Stream_Parser
+class EnvelopeHeaders extends Parser
 {
     protected
 

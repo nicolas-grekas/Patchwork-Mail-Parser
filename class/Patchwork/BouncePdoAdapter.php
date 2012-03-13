@@ -1,10 +1,12 @@
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
-class Patchwork_BouncePdoAdapter
+namespace Patchwork;
+
+class BouncePdoAdapter
 {
     protected $db;
 
-    function __construct(PDO $db)
+    function __construct(\PDO $db)
     {
         $this->db = $db;
     }

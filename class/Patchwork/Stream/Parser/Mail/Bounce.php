@@ -1,8 +1,12 @@
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
-Patchwork_Stream_Parser::createTag('T_BOUNCE_EXCLUSIVITY');
+namespace Patchwork\Stream\Parser\Mail;
 
-class Patchwork_Stream_Parser_Mail_Bounce extends Patchwork_Stream_Parser
+use Patchwork\Stream\Parser;
+
+Parser::createTag('T_BOUNCE_EXCLUSIVITY');
+
+class Bounce extends Parser
 {
     protected
 
@@ -18,9 +22,9 @@ class Patchwork_Stream_Parser_Mail_Bounce extends Patchwork_Stream_Parser
 
         if (__CLASS__ !== $c = get_class($this))
         {
-            isset($this->dependencies['Mail_Bounce']->bounceReports)
-                ? $this->bounceReports =& $this->dependencies['Mail_Bounce']->bounceReports[$this->bounceClass][$c]
-                : user_error('Mail_Bounce dependency is not loaded');
+            isset($this->dependencies['Mail\Bounce']->bounceReports)
+                ? $this->bounceReports =& $this->dependencies['Mail\Bounce']->bounceReports[$this->bounceClass][$c]
+                : user_error(__CLASS__ . ' dependency is not loaded');
         }
     }
 

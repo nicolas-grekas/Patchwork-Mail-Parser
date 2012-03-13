@@ -13,23 +13,27 @@
  * @package Patchwork/Stream/Parser
  */
 
+namespace Patchwork\Stream\Parser;
+
+use Patchwork\Stream\Parser;
+
 /**
  * Tag matching header line in a email
  */
 
-Patchwork_Stream_Parser::createTag('T_MAIL_HEADER');
-Patchwork_Stream_Parser::createTag('T_MAIL_BOUNDARY');
-Patchwork_Stream_Parser::createTag('T_MAIL_BODY');
-Patchwork_Stream_Parser::createTag('T_MAIL_MALFORMED');
-Patchwork_Stream_Parser::createTag('T_MIME_BOUNDARY');
-Patchwork_Stream_Parser::createTag('T_MIME_IGNORE');
+Parser::createTag('T_MAIL_HEADER');
+Parser::createTag('T_MAIL_BOUNDARY');
+Parser::createTag('T_MAIL_BODY');
+Parser::createTag('T_MAIL_MALFORMED');
+Parser::createTag('T_MIME_BOUNDARY');
+Parser::createTag('T_MIME_IGNORE');
 
 /**
  * This page recognise a file as an email and tag the lines as header, body etc...
  * Following the rfc822 and mime messages
  */
 
-class Patchwork_Stream_Parser_Mail extends Patchwork_Stream_Parser
+class Mail extends Parser
 {
     const
 

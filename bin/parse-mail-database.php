@@ -1,25 +1,12 @@
 #!/usr/bin/php -q
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
-ini_set('display_errors', false);
-ini_set('log_errors', true);
-ini_set('error_log', 'php://stderr');
-error_reporting(E_ALL | E_STRICT);
-function_exists('xdebug_disable') and xdebug_disable();
+require __DIR__ . '/parse-mail-config.php';
 
-function __autoload($class)
-{
-    $class = str_replace(array('\\', '_'), array('/', '/'), $class);
-    require dirname(__DIR__) . '/class/' . $class . '.php';
-}
+use Patchwork\Stream\Parser;
+use Patchwork\Stream\Parser\Mail\Bounce;
+use Patchwork\Stream\Parser\Mail\Auth;
 
-$local_whitelist = array(
-);
-
-$db = new PDO('mysql:host=localhost;dbname=bounces', 'root', 'hp');
-$db = new Patchwork_BouncePdoAdapter($db);
-
-unset($_SERVER['argv'][0]);
 
 foreach ($_SERVER['argv'] as $file)
 {
@@ -27,21 +14,21 @@ foreach ($_SERVER['argv'] as $file)
     {
         $sendmail = proc_open("exec /usr/sbin/sendmail -i -f '<>' postmaster 2> /dev/null", array(0 => array('pipe', 'r')), $sendmail_pipes);
 
-        $parser = new Patchwork_Stream_Parser;
-        new Patchwork_Stream_Parser_StreamForwarder($parser, $sendmail_pipes[0]);
-        $mail = new Patchwork_Stream_Parser_Mail($parser);
-        new Patchwork_Stream_Parser_Mail_EnvelopeHeaders($parser);
-        $meId = new Patchwork_Stream_Parser_Mail_HeaderCatcher($parser, array('message-id'));
-        $auth = new Patchwork_Stream_Parser_Mail_Auth($parser);
-        new Patchwork_Stream_Parser_Mail_Auth_Received($parser, $local_whitelist);
-        new Patchwork_Stream_Parser_Mail_Auth_Greylist($parser);
-        $omId = new Patchwork_Stream_Parser_Mail_Auth_MessageId($parser, array($db, 'countMessageId'));
-        $boun = new Patchwork_Stream_Parser_Mail_Bounce($parser);
-        new Patchwork_Stream_Parser_Mail_Bounce_Rfc3464($parser);
-        new Patchwork_Stream_Parser_Mail_Bounce_Autoreply($parser);
-        new Patchwork_Stream_Parser_Mail_Bounce_Qmail($parser);
-        new Patchwork_Stream_Parser_Mail_Bounce_Exim($parser);
-        new Patchwork_Stream_Parser_Mail_Bounce_ReceivedFor($parser);
+        $parser = new Parser;
+        new Parser\StreamForwarder($parser, $sendmail_pipes[0]);
+        $mail = new Parser\Mail($parser);
+        new Parser\Mail\EnvelopeHeaders($parser);
+        $meId = new Parser\Mail\HeaderCatcher($parser, array('message-id'));
+        $auth = new Auth($parser);
+        new Auth\Received($parser, $local_whitelist);
+        new Auth\Greylist($parser);
+        isset($db) && new Auth\MessageId($parser, array($db, 'countMessageId'));
+        $boun = new Bounce($parser);
+        new Bounce\Rfc3464($parser);
+        new Bounce\Autoreply($parser);
+        new Bounce\Qmail($parser);
+        new Bounce\Exim($parser);
+        new Bounce\ReceivedFor($parser);
 
         $parser->parseStream($h);
 
@@ -59,7 +46,7 @@ foreach ($_SERVER['argv'] as $file)
         $omId = $omId->getMessageId();
         $meId = trim($meId['message-id'], '<>;');
 
-        $auth['sent-time'] = $db->getAuthSentTime($mail->recipient, $boun);
+        $auth['sent-time'] = isset($db) ? $db->getAuthSentTime($mail->recipient, $boun) : null;
 
         $results = array();
         $result_const = array(
@@ -108,6 +95,6 @@ foreach ($_SERVER['argv'] as $file)
         fclose($sendmail_pipes[0]);
         proc_close($sendmail);
 
-        $db->recordParseResults($results);
+        isset($db) && $db->recordParseResults($results);
     }
 }

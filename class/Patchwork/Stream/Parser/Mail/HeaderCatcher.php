@@ -9,11 +9,15 @@
  * @package Patchwork/Stream/Parser/Mail
  */
 
+namespace Patchwork\Stream\Parser;
+
+use Patchwork\Stream\Parser;
+
 /**
  * This page get the value of requested headers
  */
 
-class Patchwork_Stream_Parser_Mail_HeaderCatcher extends Patchwork_Stream_Parser
+class HeaderCatcher extends Parser
 {
     protected
 

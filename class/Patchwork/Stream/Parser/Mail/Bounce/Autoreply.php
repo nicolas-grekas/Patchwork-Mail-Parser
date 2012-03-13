@@ -1,6 +1,10 @@
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
-class Patchwork_Stream_Parser_Mail_Bounce_Autoreply extends Patchwork_Stream_Parser_Mail_Bounce
+namespace Patchwork\Stream\Parser\Mail\Bounce;
+
+use Patchwork\Stream\Parser\Mail\Bounce;
+
+class Autoreply extends Bounce
 {
     protected
 
@@ -9,7 +13,7 @@ class Patchwork_Stream_Parser_Mail_Bounce_Autoreply extends Patchwork_Stream_Par
         'catchAutoReply' => array(T_MAIL_HEADER => '/vacation/i'),
     ),
     $dependencies = array(
-        'Mail_Bounce',
+        'Mail\Bounce',
         'Mail' => array('header'),
     );
 

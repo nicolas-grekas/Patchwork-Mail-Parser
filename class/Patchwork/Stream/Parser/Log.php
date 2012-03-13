@@ -1,6 +1,10 @@
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
-class Patchwork_Stream_Parser_Log extends Patchwork_Stream_Parser
+namespace Patchwork\Stream\Parser;
+
+use Patchwork\Stream\Parser;
+
+class Log extends Parser
 {
     protected
 

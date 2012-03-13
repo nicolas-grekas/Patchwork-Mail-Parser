@@ -9,11 +9,15 @@
  * @package Patchwork/Stream/Parser
  */
 
+namespace Patchwork\Stream\Parser;
+
+use Patchwork\Stream\Parser;
+
 /**
  * This page get the stream to forward it to an other process' stdin
  */
 
-class Patchwork_Stream_Parser_StreamForwarder extends Patchwork_Stream_Parser
+class StreamForwarder extends Parser
 {
     protected
 

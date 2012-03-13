@@ -1,6 +1,10 @@
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
-class Patchwork_Stream_Parser_Mail_Bounce_ReceivedFor extends Patchwork_Stream_Parser_Mail_Bounce
+namespace Patchwork\Stream\Parser\Mail\Bounce;
+
+use Patchwork\Stream\Parser\Mail\Bounce;
+
+class ReceivedFor extends Bounce
 {
     protected
 
@@ -10,7 +14,7 @@ class Patchwork_Stream_Parser_Mail_Bounce_ReceivedFor extends Patchwork_Stream_P
 
     $callbacks = array('extractReason' => T_MAIL_BODY),
     $dependencies = array(
-        'Mail_Bounce',
+        'Mail\Bounce',
         'Mail' => array('mimePart', 'bodyLine'),
     );
 

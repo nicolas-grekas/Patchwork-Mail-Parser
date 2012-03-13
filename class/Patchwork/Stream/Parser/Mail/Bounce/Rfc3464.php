@@ -1,6 +1,10 @@
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
-class Patchwork_Stream_Parser_Mail_Bounce_Rfc3464 extends Patchwork_Stream_Parser_Mail_Bounce
+namespace Patchwork\Stream\Parser\Mail\Bounce;
+
+use Patchwork\Stream\Parser\Mail\Bounce;
+
+class Rfc3464 extends Bounce
 {
     protected
 
@@ -12,7 +16,7 @@ class Patchwork_Stream_Parser_Mail_Bounce_Rfc3464 extends Patchwork_Stream_Parse
         'catchBoundary' => T_MAIL_BOUNDARY,
     ),
     $dependencies = array(
-        'Mail_Bounce',
+        'Mail\Bounce',
         'Mail' => array('type', 'header', 'mimePart'),
     );
 

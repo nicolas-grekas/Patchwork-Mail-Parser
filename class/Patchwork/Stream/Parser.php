@@ -1,8 +1,10 @@
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
+namespace Patchwork\Stream;
+
 define('T_STREAM_LINE', -1); // Generic tag matching any single line of the input stream
 
-class Patchwork_Stream_Parser
+class Parser
 {
     protected
 
@@ -68,7 +70,7 @@ class Patchwork_Stream_Parser
             }
             else $c = array();
 
-            $k = strtolower('\\' !== $v[0] ? __CLASS__ . '_' . $v : substr($v, 1));
+            $k = strtolower('\\' !== $v[0] ? __CLASS__ . '\\' . $v : substr($v, 1));
 
             if (!isset($this->parents[$k]))
             {
