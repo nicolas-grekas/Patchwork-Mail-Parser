@@ -18,7 +18,7 @@ foreach ($_SERVER['argv'] as $file)
         $auth = new Auth($parser);
         new Auth\Received($parser, $local_whitelist);
         new Auth\Greylist($parser);
-        isset($db) && new Auth\MessageId($parser, array($db, 'countMessageId'));
+        new Auth\MessageId($parser, isset($db) ? array($db, 'messageIdExists') : false);
         $boun = new Bounce($parser);
         new Bounce\Rfc3464($parser);
         new Bounce\Autoreply($parser);

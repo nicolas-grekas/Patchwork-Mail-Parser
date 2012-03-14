@@ -5,23 +5,38 @@ namespace Patchwork\Stream\Parser\Mail\Auth;
 use Patchwork\Stream\Parser;
 use Patchwork\Stream\Parser\Mail\Auth;
 
+/**
+ * The MessageId parser works on bounce messages by extracting the
+ * message-id of the original message from the body of the bounce,
+ * then running a callback for comparing this message-id with some
+ * database.
+ *
+ * The authentication class that results from this process means that
+ * the bounce can be taken for serious because it mentions a message-id
+ * that must be unforgeable.
+ *
+ * As neither the original recipient nor the original sender are considered,
+ * no guarantee can be made concerning the validity the recipient or sender
+ * mentionned in the bounce.
+ */
 class MessageId extends Auth
 {
     protected
 
     $authClass = 'message-id',
-    $messageId = '',
+    $messageId = false,
+    $messageIdExistsCallback,
     $callbacks = array('catchMailType' => T_MAIL_BOUNDARY),
     $dependencies = array(
         'Mail\Auth',
-        'Mail' => array('header', 'mimePart', 'envelope', 'bodyLine'),
+        'Mail' => array('header', 'mimePart', 'bodyLine'),
     );
 
 
-    function __construct(Parser $parent, $message_id_counter)
+    function __construct(Parser $parent, $message_id_exists_callback)
     {
         parent::__construct($parent);
-        $this->messageIdCounter = $message_id_counter;
+        $this->messageIdExistsCallback = $message_id_exists_callback;
     }
 
     protected function catchMailType($line)
@@ -66,7 +81,11 @@ class MessageId extends Auth
     protected function reportMessageId($message_id)
     {
         $this->messageId = $message_id;
-        $this->reportAuth((int) call_user_func($this->messageIdCounter, $message_id, $this->envelope));
+
+        if ($this->messageIdExistsCallback)
+        {
+            $this->reportAuth((int) (bool) call_user_func($this->messageIdExistsCallback, $message_id));
+        }
     }
 
     function getMessageId()

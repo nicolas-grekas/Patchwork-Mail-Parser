@@ -11,7 +11,7 @@ class BouncePdoAdapter
         $this->db = $db;
     }
 
-    function countMessageId($message_id, $envelope)
+    function messageIdExists($message_id)
     {
         $sql = 'SELECT COUNT(*) FROM postfix_stats WHERE last_sent_hash=?';
         $req = $this->db->prepare($sql);
