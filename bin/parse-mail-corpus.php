@@ -16,7 +16,7 @@ foreach ($_SERVER['argv'] as $file)
         $mail = new Parser\Mail($parser);
         new Parser\Mail\EnvelopeHeaders($parser);
         $auth = new Auth($parser);
-        new Auth\Received($parser, $local_whitelist);
+        new Auth\Client($parser, $local_whitelist);
         new Auth\Greylist($parser);
         new Auth\MessageId($parser, isset($db) ? array($db, 'messageIdExists') : false);
         $boun = new Bounce($parser);

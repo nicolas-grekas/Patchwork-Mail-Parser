@@ -1,25 +1,8 @@
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
-/**
- * Stream Parser Mail, Catch and analyse received DSN
- *
- * This file recognize and tag the stream
- * It's build to tag lines of a basic or a mime mail
- * @todo Handle RFC2047 encoded headers
- * @todo Detect and warn for malformed messages
- * @todo Extract information about the final recipient from the DSN when the original recipient is forwarded. See for eg. X-Actual-Recipient.
- * @author Sebastien Lavallee
- * @version 1.0
- * @package Patchwork/Stream/Parser
- */
-
 namespace Patchwork\Stream\Parser;
 
 use Patchwork\Stream\Parser;
-
-/**
- * Tag matching header line in a email
- */
 
 Parser::createTag('T_MAIL_HEADER');
 Parser::createTag('T_MAIL_BOUNDARY');
@@ -29,10 +12,12 @@ Parser::createTag('T_MIME_BOUNDARY');
 Parser::createTag('T_MIME_IGNORE');
 
 /**
- * This page recognise a file as an email and tag the lines as header, body etc...
- * Following the rfc822 and mime messages
+ * The Mail parser tags lines of an RFC822 message and
+ * exposes its MIME structure to other dependent parsers.
+ *
+ * @todo Handle RFC2047 encoded headers
+ * @todo Detect and warn for malformed messages
  */
-
 class Mail extends Parser
 {
     const
@@ -74,22 +59,8 @@ class Mail extends Parser
 
 
     /**
-     * Constructor
-     *
-     * @param parent $parent
-     *  Take the value of the parent class
-     * @param string $sender
-     *  Input string set a value for the sender(default is null)
-     * @param string $recient
-     *  Input string set a value for the recipient(default is null)
-     * @param string $ip
-     *  Input string set a value for the clientIp(default is null)
-     * @param string $helo
-     *  Input string set a value for the clientHelo(default is null)
-     * @param string $hostname
-     *  Input string set a value for the clientHostname(default is null)
+     * Initializes the parser, and the mail envelope if already known.
      */
-
     function __construct(parent $parent, $sender = null, $recipient = null, $ip = null, $helo = null, $hostname = null)
     {
         $this->envelope = (object) array(
@@ -107,26 +78,21 @@ class Mail extends Parser
     }
 
     /**
-     * Get the envelope object. Contains informations about the email : sender, recipient, client Ip, client helo, and the client Hostname.
+     * Returns the envelope of the message.
      *
-     * @return object
-     *  Object containing 'sender', 'recipient', 'clientIp', 'clientHelo', 'clientHostname'
+     * @return stdClass containing: sender, recipient, client IP, helo and hostname.
      */
-
     function getEnvelope()
     {
         return clone $this->envelope;
     }
 
     /**
-     * Keep information given by a Content-Type header line in $this->nextType variable (Indicate at any time the format of body used in this email).
+     * Sets the content-type of the next mime body part.
      *
-     * @param $topType
-     *  First parameter given in the Content-Type header indicating what kind of body the parser is facing
-     * @param array $params
-     *  If params is given it will contain the other parameters of the Content-Type line
+     * @param string $topType content-type of the next body part ('text/plain' e.g.)
+     * @param array $params parameters of the content-type (['charset' => 'UTF-8'] e.g.)
      */
-
     public function setNextType($topType, $params = array())
     {
         $t = explode('/', $topType, 2);
@@ -139,26 +105,22 @@ class Mail extends Parser
     }
 
     /**
-     * Tag header lines until a boundary line shows up, detect malformed header and regroup multiple line header.
+     * For each MIME part, identifies logical mail headers and tags them as T_MAIL_HEADER
      *
-     * @param string &$line
-     *  Input string to be analysed
-     * @param array $m
-     *  $m filled with the results of search in a preg_match() method. $m[0] has to contain the text that matched the full pattern, $m[1] will have the text that matched the first captured parenthesized subpattern, and so on
-     * @param array $tags
-     *  array of tags that are already assigned to this line
-     * @return int
-     *  Value of the tag for this line
+     * @param string &$line input line of the stream
+     * @param array $matches not used
+     * @param array $tags tags that are already assigned to this line
+     * @return int|false new tag for the line.
      */
 
-    protected function tagMailHeader(&$line, $m, $tags)
+    protected function tagMailHeader(&$line, $matches, $tags)
     {
         if (isset($tags[T_MIME_BOUNDARY])) return;
 
         if ("\n" === $line || "\r\n" === $line)
         {
             $this->unregister(array(__FUNCTION__ => T_STREAM_LINE));
-            return $this->tagMailBoundary($line, $m, $tags);
+            return $this->tagMailBoundary($line, $matches, $tags);
         }
 
         static $nextHeader = array();
@@ -177,12 +139,10 @@ class Mail extends Parser
     }
 
     /**
-     * Explode header lines separating the name and the value (results registered in $this->header), tokenize Content-Type Header line (register the result using setNextType) and detect the encoding of the mail using Content-transfer-encoding line
-     *
-     * @param string $line
-     *  Input string to be analysed
+     * For each MIME part, extracts headers name and value and exposes them one at a time in $this->header.
+     * Content-Type headers are parsed according to RFC2045,
+     * transfert encoding of the body part is extracted from Content-Transfer-Encoding.
      */
-
     protected function catchHeader($line)
     {
         $v = explode(':', $line, 2);
@@ -219,14 +179,8 @@ class Mail extends Parser
     }
 
     /**
-     * Tag line as T_Mail_Boundary line (blank line after a header line)
-     *
-     * @param string $line
-     *  Input string to be analysed
-     * @return int
-     *  Value of the tag for this line (T_MAIL_BOUNDARY)
+     * For each MIME part, tags lines between headers and body as T_MAIL_BOUNDARY
      */
-
     protected function tagMailBoundary($line)
     {
         $this->register(array('tagMailBody' => T_STREAM_LINE));
@@ -241,9 +195,8 @@ class Mail extends Parser
     }
 
     /**
-     * Activate methods depending on the current state of $this->type
+     * Sets parsing of the next body part according to its content-type.
      */
-
     protected function registerType()
     {
         switch (true)
@@ -260,37 +213,32 @@ class Mail extends Parser
     }
 
     /**
-     * Set new value for $this->nextType using setNextType() for a rfc822 message part
+     * Sets parsing of the next body part to an encapsulated RFC822
+     * message whose default Content-Type is given as arguments.
      *
-     * @param string $nextTopType
-     *  First parameter given in the Content-Type header indicating what kind of body the parser is facing (default value is 'text/plain')
-     * @param array $nextTypeParams
-     *  If nextTypeParams is given it will contain the other parameters of the Content-Type line (default value array())
+     * @param string $defaultTopType default Content-Type of the encapsulated body part (defaults to 'text/plain')
+     * @param array $defaultTypeParams parameters for the default Content-Type
      */
-
-    public function registerRfc822Part($nextTopType = 'text/plain', $nextTypeParams = array())
+    public function registerRfc822Part($defaultTopType = 'text/plain', $defaultTypeParams = array())
     {
         if (false !== $this->nextType)
         {
-            $this->setError("Failed to set Mail->nextType to `{$nextTopType}`: already set to `{$this->nextType->top}`", E_USER_WARNING);
+            $this->setError("Failed to set Mail->nextType to `{$defaultTopType}`: already set to `{$this->nextType->top}`", E_USER_WARNING);
             return;
         }
 
-        $this->setNextType($nextTopType, $nextTypeParams);
+        $this->setNextType($defaultTopType, $defaultTypeParams);
 
         $this->unregister(array('tagMailBody' => T_STREAM_LINE));
         $this->register(array('tagMailHeader' => T_STREAM_LINE));
     }
 
     /**
-     * Register parameters about a section of a mime mail
+     * Sets parsing of the next part to a MIME one.
      *
-     * @param string $defaultTopType
-     *  First parameter given in the Content-Type header indicating what kind of body the parser is facing
-     * @param array $defaultTopParams
-     *  If $defaultTopParams is given it will contain the other parameters of the Content-Type line
+     * @param string $defaultTopType default Content-Type of the MIME part
+     * @param array $defaultTypeParams parameters for the default Content-Type
      */
-
     public function registerMimePart($defaultTopType, $defaultTypeParams = array())
     {
         if (false !== $this->nextType)
@@ -325,16 +273,8 @@ class Mail extends Parser
     }
 
     /**
-     * Tag line as a T_MIME_BOUNDARY
-     *
-     * @param string $line
-     *  Input string to be analysed
-     * @param array $matches
-     *  $matches filled with the results of search in a preg_match() method. $matches[0] has to contain the text that matched the full pattern, $matches[1] will have the text that matched the first captured parenthesized subpattern, and so on
-     * @return int
-     *  Value of the tag for this line (T_MIME_BOUNDARY)
+     * Tags lines matching MIME boundaries as T_MIME_BOUNDARY.
      */
-
     protected function tagMimeBoundary($line, $matches)
     {
         $this->unregister(array(
@@ -369,36 +309,17 @@ class Mail extends Parser
     }
 
     /**
-     * Tag line as a T_MIME_IGNORE
-     *
-     * @param string $line
-     *  Input string to be analysed
-     * @param array $matches
-     *  $matches filled with the results of search in a preg_match() method. $m[0] has to contain the text that matched the full pattern, $m[1] will have the text that matched the first captured parenthesized subpattern, and so on
-     * @param array $tags
-     *  array of tags that are already assigned to this line
-     * @return int
-     *  Value of the tag for this line (T_MIME_IGNORE)
+     * Tags lines between headers of a MIME part and its first opening boundary as T_MIME_IGNORE.
      */
-
     protected function tagMimeIgnore($line, $matches, $tags)
     {
         if (!isset($tags[T_MIME_BOUNDARY])) return T_MIME_IGNORE;
     }
 
     /**
-     * Tag line as a T_MAIL_BODY and decode the line result is kept in $this->bodyLine
-     *
-     * @param string &$line
-     *  Input string to be analysed
-     * @param array $matches
-     *  $matches filled with the results of search in a preg_match() method. $m[0] has to contain the text that matched the full pattern, $m[1] will have the text that matched the first captured parenthesized subpattern, and so on
-     * @param array $tags
-     *  array of tags that are already assigned to this line
-     * @return int
-     *  Value of the tag for this line (T_MAIL_BODY)
+     * Tags MIME parts body lines as T_MAIL_BODY.
+     * The corresponding transfer-encoding decoded, UTF-8 converted string is exposed in $this->bodyLine.
      */
-
     protected function tagMailBody($line, $matches, $tags)
     {
         if (!isset($tags[T_MIME_BOUNDARY]))
@@ -416,16 +337,8 @@ class Mail extends Parser
     }
 
     /**
-     * Cut a string into tokens using specific delimiters given to the method
-     *
-     * @param string $header
-     *  Input string to be tokenized
-     * @param string $tspecial
-     *  Designate the list of token considered as delimiter(default value TSPECIALS_822)
-     * @return array
-     *  Output array containing the tokens
+     * Tokenizes a header string according to RFC822 section 3.
      */
-
     static function tokenizeHeader($header, $tspecial = self::TSPECIALS_822)
     {
         $i = -1;

@@ -4,6 +4,14 @@ namespace Patchwork\Stream;
 
 define('T_STREAM_LINE', -1); // Generic tag matching any single line of the input stream
 
+/**
+ * Patchwork\Stream\Parser is a highly extensible framework
+ * for building high-performance stream parsers.
+ *
+ * It does nothing on its own but implement a predictable plugin mechanism
+ * for registering and dispatching lines of the stream to a chain of parsers,
+ * while remaining as fast and memory efficient as possible.
+ */
 class Parser
 {
     protected
@@ -117,16 +125,16 @@ class Parser
 
     function parseStream($stream)
     {
-        // Parse the stream after recursively traversing $this->parent
+        // Recursively traverse the inheritance chain defined by $this->parent
 
         if ($this->parent !== $this) return $this->parent->parseStream($stream);
-
-        // Callback registry matching loop
 
         $this->errors = array();
         $this->lineNumber = 0;
         $this->nextLine = fgets($stream);
         $reg =& $this->callbackRegistry;
+
+        // Callback registry matching loop
 
         while (false !== $line = $this->nextLine)
         {
@@ -143,6 +151,12 @@ class Parser
                 if (isset($reg[$t]))
                 {
                     $callbacks += $reg[$t];
+
+                    // Callbacks triggering are always ordered:
+                    // - first by parsers' instanciation order
+                    // - then by callbacks' registration order
+                    // - callbacks registered with a tilde prefix
+                    //   are then called in reverse order.
                     ksort($callbacks);
                 }
 
@@ -155,7 +169,17 @@ class Parser
                     {
                         if ($k < 0)
                         {
+                            // $line is the current line
+                            // $matches is populated by applying a registered regexp to $line
+                            // $tags is an array of tags already associated to $line
+
                             $t = $c[1]->$c[2]($line, $matches, $tags);
+
+                            // Non-tilde-prefixed callback can return:
+                            // - false, which cancels the current line
+                            // - a new line tag, which is added to $tags and loads the
+                            //   related callbacks in the current callbacks stack
+                            // - or nothing (null)
 
                             if (false === $t) continue 3;
                             if ($t && empty($tags[$t])) continue 2;
@@ -172,6 +196,8 @@ class Parser
         }
     }
 
+    // Set an error on input code inside parsers
+
     protected function setError($message, $type)
     {
         $this->errors[(int) $this->line][] = array(
@@ -182,10 +208,14 @@ class Parser
         );
     }
 
+    // Register callbacks for the next lines
+
     protected function register($method)
     {
         $this->callbackRegisteryApply($method, true);
     }
+
+    // Unregister callbacks for the next lines
 
     protected function unregister($method)
     {
@@ -250,6 +280,8 @@ class Parser
         }
     }
 
+    // Unregister all callbacks registered for $this parser
+
     protected function unregisterAll()
     {
         foreach ($this->callbackRegistry as $tag => $v)
@@ -263,6 +295,8 @@ class Parser
         }
     }
 
+    // Create new line type
+
     static function createTag($name)
     {
         static $tag = T_STREAM_LINE;
@@ -270,6 +304,8 @@ class Parser
         if (isset(self::$tagNames[$tag])) user_error("Overwriting an already created tag value is forbidden ({$name}={$tag})", E_USER_WARNING);
         else self::$tagNames[$tag] = $name;
     }
+
+    // Get the symbolic name of a given line tag as created by self::createTag
 
     static function getTagName($tag)
     {

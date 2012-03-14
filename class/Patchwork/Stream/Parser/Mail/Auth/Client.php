@@ -5,7 +5,11 @@ namespace Patchwork\Stream\Parser\Mail\Auth;
 use Patchwork\Stream\Parser;
 use Patchwork\Stream\Parser\Mail\Auth;
 
-class Received extends Auth
+/**
+ * The Client parser reports if the client IP or hostname from
+ * which a message is received is within a given whitelist.
+ */
+class Client extends Auth
 {
     protected
 

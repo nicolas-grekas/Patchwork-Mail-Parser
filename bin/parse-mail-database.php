@@ -20,7 +20,7 @@ foreach ($_SERVER['argv'] as $file)
         new Parser\Mail\EnvelopeHeaders($parser);
         $meId = new Parser\Mail\HeaderCatcher($parser, array('message-id'));
         $auth = new Auth($parser);
-        new Auth\Received($parser, $local_whitelist);
+        new Auth\Client($parser, $local_whitelist);
         new Auth\Greylist($parser);
         $omId = new Auth\MessageId($parser, isset($db) ? array($db, 'messageIdExists') : false);
         $boun = new Bounce($parser);

@@ -1,22 +1,12 @@
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
-/**
- * Stream Parser Log, Catch and analyse received DSN
- *
- * This file forward the stream to sendmail
- * @author Sebastien Lavallee
- * @version 1.0
- * @package Patchwork/Stream/Parser
- */
-
 namespace Patchwork\Stream\Parser;
 
 use Patchwork\Stream\Parser;
 
 /**
- * This page get the stream to forward it to an other process' stdin
+ * The StreamForwarder parser writes every line of the parsed stream to an other stream.
  */
-
 class StreamForwarder extends Parser
 {
     protected
@@ -30,11 +20,6 @@ class StreamForwarder extends Parser
         parent::__construct($parent);
         $this->stream = $stream;
     }
-
-    /**
-     * @param string $line
-     *  Input string to be written
-     */
 
     protected function writeLine($line)
     {

@@ -4,6 +4,12 @@ namespace Patchwork\Stream\Parser\Mail\Bounce;
 
 use Patchwork\Stream\Parser\Mail\Bounce;
 
+/**
+ * The ReceivedFor parser extracts the original recipient from a bounce
+ * by looking at Received headers in the excerpt of the original message
+ * mentioned in the bounce. The reason of the bounce is extracted from
+ * the body of the bounce itself.
+ */
 class ReceivedFor extends Bounce
 {
     protected
@@ -25,7 +31,7 @@ class ReceivedFor extends Bounce
         {
             $this->unregister(array(__FUNCTION__ => T_MAIL_BODY));
         }
-        else if (0 === strncmp($this->bodyLine, '---', 3))
+        else if (0 === strncmp($this->bodyLine, '---', 3)) // 3 dashes end the reason
         {
             $this->unregister(array(__FUNCTION__ => T_MAIL_BODY));
             $this->register(array('extractReceived' => T_MAIL_BODY));
@@ -33,7 +39,7 @@ class ReceivedFor extends Bounce
         else if ($this->reasonLines > 0 && '' !== $line = trim($this->bodyLine))
         {
             $this->reason .= $line . ' ';
-            --$this->reasonLines;
+            --$this->reasonLines; // Limit extracted reason length
         }
     }
 

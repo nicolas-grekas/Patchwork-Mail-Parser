@@ -4,6 +4,11 @@ namespace Patchwork\Stream\Parser\Mail;
 
 use Patchwork\Stream\Parser;
 
+/**
+ * The Auth parser does nothing on its own but acts as a container for
+ * child sub-parsers that extract authentication results, each child
+ * specialized on one type of authentication.
+ */
 class Auth extends Parser
 {
     protected

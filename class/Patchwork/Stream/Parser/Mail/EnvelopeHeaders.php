@@ -1,22 +1,14 @@
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
-/**
- * Stream Parser Mail Envelope Headers, Catch and analyse received DSN
- *
- * This file is collecting values of the envelope and record them in mail.php
- * @author Sebastien Lavallee
- * @version 1.0
- * @package Patchwork/Stream/Parser/Mail
- */
-
 namespace Patchwork\Stream\Parser\Mail;
 
 use Patchwork\Stream\Parser;
 
 /**
- * This page gets the content of the envelope header
+ * The EnvelopeHeaders parser extracts the envelope of an email from
+ * its three very first headers, in this specific order, as inserted
+ * by postfix e.g.: Return-Path, Delivered-To then Received.
  */
-
 class EnvelopeHeaders extends Parser
 {
     protected
@@ -24,13 +16,6 @@ class EnvelopeHeaders extends Parser
     $callbacks = array('getReturnPath' => T_MAIL_HEADER),
     $dependencies = array('Mail' => 'envelope');
 
-
-    /**
-     * Get the sender from the stream if the bounce using the Return-Path header line.
-     *
-     * @param $line
-     *  Input string to be analysed
-     */
 
     protected function getReturnPath($line)
     {
@@ -46,13 +31,6 @@ class EnvelopeHeaders extends Parser
         $this->register(array('getDeliveredTo' => T_MAIL_HEADER));
     }
 
-    /**
-     * Get the recipient from the stream if the bounce using the Delivered-to header line.
-     *
-     * @param $line
-     *  Input string to be analysed
-     */
-
     protected function getDeliveredTo($line)
     {
         $this->unregister(array(__FUNCTION__ => T_MAIL_HEADER));
@@ -66,13 +44,6 @@ class EnvelopeHeaders extends Parser
         $this->envelope->recipient = $m[1];
         $this->register(array('getReceivedLine' => T_MAIL_HEADER));
     }
-
-    /**
-     * Get the client Helo, hostname and Ip from the stream if the bounce using the Received header line.
-     *
-     * @param $line
-     *  Input string to be analysed
-     */
 
     protected function getReceivedLine($line)
     {

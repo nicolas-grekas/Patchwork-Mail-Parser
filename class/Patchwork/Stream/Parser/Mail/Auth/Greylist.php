@@ -5,6 +5,11 @@ namespace Patchwork\Stream\Parser\Mail\Auth;
 use Patchwork\Stream\Parser;
 use Patchwork\Stream\Parser\Mail\Auth;
 
+/**
+ * The Greylist parser assumes that the last X-Greylist header in a mail
+ * is inserted by the local server. As such, it can safelly extract
+ * authentication data appended there by the milter-greylist component.
+ */
 class Greylist extends Auth
 {
     protected

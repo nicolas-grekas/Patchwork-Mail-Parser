@@ -4,6 +4,9 @@ namespace Patchwork\Stream\Parser;
 
 use Patchwork\Stream\Parser;
 
+/**
+ * The dumper parser echoes the parsed stream line by line for easier debugging.
+ */
 class Dumper extends Parser
 {
     protected

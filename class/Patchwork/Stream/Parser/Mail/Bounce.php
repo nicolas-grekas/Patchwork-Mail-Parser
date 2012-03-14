@@ -6,6 +6,14 @@ use Patchwork\Stream\Parser;
 
 Parser::createTag('T_BOUNCE_EXCLUSIVITY');
 
+/**
+ * The Bounce mail parser does nothing on its own but acts as a container
+ * for child sub-parsers that extract bounce data, each child specialized
+ * on one type of bounce format.
+ *
+ * @todo Write a child parser that extracts the final recipient from the DSN
+ *       when the original recipient is a forward. See X-Actual-Recipient.
+ */
 class Bounce extends Parser
 {
     protected

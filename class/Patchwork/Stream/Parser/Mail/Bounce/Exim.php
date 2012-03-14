@@ -2,6 +2,9 @@
 
 namespace Patchwork\Stream\Parser\Mail\Bounce;
 
+/**
+ * The Exim parser extracts bounce data from bounces emitted by exim servers.
+ */
 class Exim extends Qmail
 {
     protected

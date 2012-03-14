@@ -4,6 +4,9 @@ namespace Patchwork\Stream\Parser\Mail\Bounce;
 
 use Patchwork\Stream\Parser\Mail\Bounce;
 
+/**
+ * The Rfc3464 mail parser extracts bounced recipients and reasons from RFC3464 compliant bounces.
+ */
 class Rfc3464 extends Bounce
 {
     protected

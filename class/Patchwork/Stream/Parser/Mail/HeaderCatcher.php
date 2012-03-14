@@ -1,22 +1,12 @@
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
-/**
- * Stream Parser Mail HeaderCatcher, Catch and analyse received DSN
- *
- * This file is collecting message headers
- * @author Sebastien Lavallee
- * @version 1.0
- * @package Patchwork/Stream/Parser/Mail
- */
-
 namespace Patchwork\Stream\Parser;
 
 use Patchwork\Stream\Parser;
 
 /**
- * This page get the value of requested headers
+ * The HeaderCatcher mail parser extracts requested header from a message.
  */
-
 class HeaderCatcher extends Parser
 {
     protected

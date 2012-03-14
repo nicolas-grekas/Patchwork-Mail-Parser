@@ -4,6 +4,9 @@ namespace Patchwork\Stream\Parser\Mail\Bounce;
 
 use Patchwork\Stream\Parser\Mail\Bounce;
 
+/**
+ * The Autoreply bounce parser detects some vacation messages.
+ */
 class Autoreply extends Bounce
 {
     protected
