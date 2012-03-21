@@ -15,7 +15,6 @@ Parser::createTag('T_MIME_IGNORE');
  * The Mail parser tags lines of an RFC822 message and
  * exposes its MIME structure to other dependent parsers.
  *
- * @todo Handle RFC2047 encoded headers
  * @todo Detect and warn for malformed messages
  */
 class Mail extends Parser
@@ -23,7 +22,8 @@ class Mail extends Parser
     const
 
     TSPECIALS_822  = '()<>@,;:\\".[]',
-    TSPECIALS_2045 = '()<>@,;:\\"/[]?=';
+    TSPECIALS_2045 = '()<>@,;:\\"/[]?=',
+    EMAIL_RX = '/[a-zA-Z0-9.!#$%&\'*+\/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\\.[a-zA-Z0-9-]+)*/'; // From the HTML5 spec
 
 
     protected
@@ -152,8 +152,9 @@ class Mail extends Parser
             'value' => preg_replace('/[ \t\r\n]*[\r\n][ \t\r\n]*/', ' ', trim($v[1])),
         );
 
-        if ('content-type' === $this->header->name)
+        switch ($this->header->name)
         {
+        case 'content-type':
             $v = self::tokenizeHeader($this->header->value, self::TSPECIALS_2045);
 
             if (isset($v[2]) && '/' === $v[1])
@@ -171,10 +172,16 @@ class Mail extends Parser
 
                 $this->setNextType($type, $params);
             }
-        }
-        else if ('content-transfer-encoding' === $this->header->name)
-        {
+            break;
+
+        case 'content-transfer-encoding':
             $this->mimePart->encoding = strtolower($this->header->value);
+            break;
+
+        case 'subject':
+            $this->mimePart->subject = self::decodeHeader($this->header->value);
+            if (0 === $this->mimePart->depth) $this->envelope->subject = $this->mimePart->subject;
+            break;
         }
     }
 
@@ -393,5 +400,89 @@ class Mail extends Parser
         while (isset($header[$i]));
 
         return $tokens;
+    }
+
+    /**
+     * Decodes a string according to RFC2047
+     *
+     * @return string|false returns a decoded MIME field on success, or false if an error occurs.
+     */
+    static function decodeHeader($header)
+    {
+        return @iconv_mime_decode($header, ICONV_MIME_DECODE_CONTINUE_ON_ERROR, 'UTF-8//IGNORE');
+    }
+
+    /**
+     * Parses email addresses according to RFC822
+     *
+     * @return array
+     */
+    static function parseAddresses($header, $email_rx = self::EMAIL_RX)
+    {
+        $t = self::tokenizeHeader($header);
+        $group = false;
+        $emails = array();
+
+        for ($i = 0; isset($t[$i]); ++$i)
+        {
+            $state = 1;
+
+            $e = array(
+                'display' => '',
+                'address' => '',
+                'group' => $group,
+            );
+
+            for (; isset($t[$i]); ++$i)
+            {
+                switch ($t[$i])
+                {
+                case '<':
+                    $e['address'] = '';
+                    $state = 2;
+                    continue 2;
+
+                case '>':
+                    $state = 3;
+                    continue 2;
+
+                case ',':
+                    break 2;
+
+                case ':':
+                    if (false === $group && 1 === $state)
+                    {
+                        if ($e['display']) $e['display'] = self::decodeHeader(substr($e['display'], 1));
+                        $group = $e['group'] = $e['display'] ? $e['display'] : true;
+                        $e['display'] = $e['address'] = '';
+                        continue 2;
+                    }
+                    break;
+
+                case ';':
+                    if (false !== $group)
+                    {
+                        $group = false;
+                        continue 2;
+                    }
+                    break;
+                }
+
+                switch ($state)
+                {
+                case 1: $e['display'] .= ' ' . $t[$i];
+                case 2: $e['address'] .= $t[$i];
+                }
+            }
+
+            if ('' === $e['address'] || preg_match($email_rx, $e['address']))
+            {
+                if (1 === $state) $e['display'] = '';
+                else if ($e['display']) $e['display'] = self::decodeHeader(substr($e['display'], 1));
+                $emails[] = $e;
+            }
+        }
+
+        return $emails;
     }
 }
