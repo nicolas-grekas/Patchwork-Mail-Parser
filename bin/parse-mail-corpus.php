@@ -15,6 +15,7 @@ foreach ($_SERVER['argv'] as $file)
         $parser = new Parser;
         $mail = new Parser\Mail($parser);
         new Parser\Mail\EnvelopeHeaders($parser);
+        new Parser\Mail\Pra($parser);
         $auth = new Auth($parser);
         new Auth\Client($parser, $local_whitelist);
         new Auth\Greylist($parser);

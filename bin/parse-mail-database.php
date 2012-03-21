@@ -18,6 +18,7 @@ foreach ($_SERVER['argv'] as $file)
         new Parser\StreamForwarder($parser, $sendmail_pipes[0]);
         $mail = new Parser\Mail($parser);
         new Parser\Mail\EnvelopeHeaders($parser);
+        new Parser\Mail\Pra($parser);
         $meId = new Parser\Mail\HeaderCatcher($parser, array('message-id'));
         $auth = new Auth($parser);
         new Auth\Client($parser, $local_whitelist);
