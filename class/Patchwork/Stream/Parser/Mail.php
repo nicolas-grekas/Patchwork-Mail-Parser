@@ -196,7 +196,9 @@ class Mail extends Parser
         $this->nextType = false;
 
         if (false === $this->mimePart->type)
+        {
             $this->mimePart->type = $this->type;
+        }
 
         return T_MAIL_BOUNDARY;
     }
@@ -282,7 +284,7 @@ class Mail extends Parser
     /**
      * Tags lines matching MIME boundaries as T_MIME_BOUNDARY.
      */
-    protected function tagMimeBoundary($line, $matches)
+    protected function tagMimeBoundary($line, $p, $matches)
     {
         $this->unregister(array(
             'tagMailHeader' => T_STREAM_LINE,
@@ -318,7 +320,7 @@ class Mail extends Parser
     /**
      * Tags lines between headers of a MIME part and its first opening boundary as T_MIME_IGNORE.
      */
-    protected function tagMimeIgnore($line, $matches, $tags)
+    protected function tagMimeIgnore($line, $tags)
     {
         if (!isset($tags[T_MIME_BOUNDARY])) return T_MIME_IGNORE;
     }
@@ -327,7 +329,7 @@ class Mail extends Parser
      * Tags MIME parts body lines as T_MAIL_BODY.
      * The corresponding transfer-encoding decoded, UTF-8 converted string is exposed in $this->bodyLine.
      */
-    protected function tagMailBody($line, $matches, $tags)
+    protected function tagMailBody($line, $tags)
     {
         if (!isset($tags[T_MIME_BOUNDARY]))
         {
@@ -335,7 +337,9 @@ class Mail extends Parser
             else if (     'base64' === $this->mimePart->encoding) $line = base64_decode($line);
 
             if (isset($this->type->params['charset']))
-                $line = @iconv($this->type->params['charset'], 'UTF-8//IGNORE', $line);
+            {
+                $line = @iconv(str_ireplace('unicode-1-1-utf-7', 'utf-7', $this->type->params['charset']), 'UTF-8//IGNORE', $line);
+            }
 
             $this->bodyLine = $line;
 
@@ -409,7 +413,8 @@ class Mail extends Parser
      */
     static function decodeHeader($header)
     {
-        return @iconv_mime_decode($header, ICONV_MIME_DECODE_CONTINUE_ON_ERROR, 'UTF-8//IGNORE');
+        $header = str_ireplace('=?unicode-1-1-utf-7?','=?utf-7?', $header);
+        return iconv_mime_decode($header, ICONV_MIME_DECODE_CONTINUE_ON_ERROR, 'UTF-8//IGNORE');
     }
 
     /**

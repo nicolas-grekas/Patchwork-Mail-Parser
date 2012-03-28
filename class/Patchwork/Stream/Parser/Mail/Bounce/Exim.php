@@ -14,10 +14,6 @@ class Exim extends Qmail
     $callbacks = array(
         'extractHeaderRecipient' => T_MAIL_HEADER,
         'catchBoundary' => T_MAIL_BOUNDARY,
-    ),
-    $dependencies = array(
-        'Mail\Bounce',
-        'Mail' => array('header', 'bodyLine'),
     );
 
 

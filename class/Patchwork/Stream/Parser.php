@@ -173,7 +173,7 @@ class Parser
                             // $matches is populated by applying a registered regexp to $line
                             // $tags is an array of tags already associated to $line
 
-                            $t = $c[1]->$c[2]($line, $matches, $tags);
+                            $t = $c[1]->$c[2]($line, $tags, $matches);
 
                             // Non-tilde-prefixed callback can return:
                             // - false, which cancels the current line
@@ -184,7 +184,7 @@ class Parser
                             if (false === $t) continue 3;
                             if ($t && empty($tags[$t])) continue 2;
                         }
-                        else if (null !== $c[0]->$c[1]($line, $matches, $tags))
+                        else if (null !== $c[0]->$c[1]($line, $tags, $matches))
                         {
                             user_error("No return value is expected for tilde-registered callback: " . get_class($c[0]) . '->' . $c[1] . '()', E_USER_NOTICE);
                         }
@@ -200,7 +200,7 @@ class Parser
 
     protected function setError($message, $type)
     {
-        $this->errors[(int) $this->line][] = array(
+        $this->errors[(int) $this->lineNumber][] = array(
             'type' => $type,
             'message' => $message,
             'line' => (int) $this->lineNumber,

@@ -29,9 +29,9 @@ class Rfc3464 extends Bounce
         $this->unregister(array(__FUNCTION__ => T_MAIL_BOUNDARY));
         $this->register(array('startDsnPart' => T_MAIL_BOUNDARY));
 
-        if ('multipart/report' === $this->type->top
-            && isset($this->type->params['report-type'])
-            && 0 === strcasecmp('delivery-status', $this->type->params['report-type']) )
+        if ( 'multipart/report' === $this->type->top
+          && isset($this->type->params['report-type'])
+          && 0 === strcasecmp('delivery-status', $this->type->params['report-type']) )
         {
             return $this->getExclusivity();
         }

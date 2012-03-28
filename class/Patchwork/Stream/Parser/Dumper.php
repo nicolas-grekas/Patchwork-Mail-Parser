@@ -20,7 +20,7 @@ class Dumper extends Parser
         isset($width) && $this->width = $width;
     }
 
-    protected function logLine($line, $m, $t)
+    protected function logLine($line, $t)
     {
         $line = strtr($line, "\r\n\t", '   ');
         $line = substr($line, 0, $this->width);

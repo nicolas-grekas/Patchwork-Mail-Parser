@@ -16,7 +16,7 @@ class Pra extends Parser
 
     $callbacks = array(
         'tagHeader' => T_MAIL_HEADER,
-        'tagBoundary' => T_MAIL_BOUNDARY,
+        'unregisterAll' => T_MAIL_BOUNDARY,
     ),
     $dependencies = array('Mail' => array('envelope', 'header'));
 
@@ -37,10 +37,5 @@ class Pra extends Parser
                 $this->unregister($this->callbacks);
             }
         }
-    }
-
-    protected function tagBoundary($line)
-    {
-        $this->unregister($this->callbacks);
     }
 }

@@ -13,7 +13,7 @@ use Patchwork\Stream\Parser\Mail\Auth;
  *
  * The authentication class that results from this process means that
  * the bounce can be taken for serious because it mentions a message-id
- * that must be unforgeable.
+ * that has been used in a previously sent message.
  *
  * As neither the original recipient nor the original sender are considered,
  * no guarantee can be made concerning the validity the recipient or sender
@@ -52,7 +52,7 @@ class MessageId extends Auth
 
     protected function catchMessage($line)
     {
-        if (0 === strncmp($this->bodyLine, '---', 3))
+        if (0 === strncmp(ltrim($this->bodyLine), '---', 3))
         {
             $this->unregister(array(__FUNCTION__ => T_MAIL_BODY));
             $this->register(array('catchMessageId' => T_MAIL_BODY));

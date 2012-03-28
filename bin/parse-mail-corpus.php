@@ -19,7 +19,7 @@ foreach ($_SERVER['argv'] as $file)
         $auth = new Auth($parser);
         new Auth\Client($parser, $local_whitelist);
         new Auth\Greylist($parser);
-        new Auth\MessageId($parser, isset($db) ? array($db, 'messageIdExists') : false);
+        $omId = new Auth\MessageId($parser, isset($db) ? array($db, 'messageIdExists') : false);
         $boun = new Bounce($parser);
         new Bounce\Rfc3464($parser);
         new Bounce\Autoreply($parser);
@@ -41,11 +41,12 @@ foreach ($_SERVER['argv'] as $file)
         {
             $mail = $mail->getEnvelope();
             $auth = $auth->getAuthenticationResults();
+            $omId = $omId->getMessageId();
             $boun = $boun->getBounceReports();
 
             $auth['sent-time'] = isset($db) ? $db->getAuthSentTime($mail->recipient, $boun) : null;
 
-            $tail = '';
+            $tail = "\t" . $omId;
 
             foreach (array('whitelist', 'message-id', 'sent-time') as $test)
             {

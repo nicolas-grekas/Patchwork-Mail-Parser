@@ -13,7 +13,8 @@ class Autoreply extends Bounce
 
     $bounceClass = 'vacation',
     $callbacks = array(
-        'catchAutoReply' => array(T_MAIL_HEADER => '/vacation/i'),
+        'catchAutoReply' => T_MAIL_HEADER,
+        'unregisterAll' => T_MAIL_BOUNDARY,
     ),
     $dependencies = array(
         'Mail\Bounce',
@@ -23,7 +24,7 @@ class Autoreply extends Bounce
 
     protected function catchAutoReply($line)
     {
-        if ('auto-submitted' === $this->header->name)
+        if ('auto-submitted' === $this->header->name && false !== stripos($line, 'vacation'))
         {
             return $this->getExclusivity();
         }

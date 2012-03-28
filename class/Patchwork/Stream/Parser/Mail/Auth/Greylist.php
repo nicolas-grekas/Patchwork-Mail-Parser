@@ -17,12 +17,12 @@ class Greylist extends Auth
     $result = false,
     $authClass = 'whitelist',
     $pattern = array(
+        'Local Mail' => 'local-list',
+        'Sender IP whitelisted' => 'local-list',
         'Sender IP whitelisted by DNSRBL' => 'external-list',
-        'Sender IP whitelisted'           => 'local-list',
-        'Local Mail'                      => 'local-list',
     ),
     $callbacks = array(
-        'testGreylist' => array('/^X-Greylist: /' => T_MAIL_HEADER),
+        'catchGreylist' => T_MAIL_HEADER,
         'registerResults' => T_MAIL_BOUNDARY,
     ),
     $dependencies = array('Mail\Auth');
@@ -35,16 +35,19 @@ class Greylist extends Auth
         $this->reportAuth(false);
     }
 
-    protected function testGreylist($line)
+    protected function catchGreylist($line)
     {
-        $this->result = false;
-
-        foreach ($this->pattern as $p => $r)
+        if (0 === strncasecmp($line, 'X-Greylist: ', 12))
         {
-            if (12 === strpos($line, $p))
+            $this->result = false;
+
+            foreach ($this->pattern as $p => $r)
             {
-                $this->result = $r;
-                break;
+                if (12 === strpos($line, $p))
+                {
+                    $this->result = $r;
+                    break;
+                }
             }
         }
     }
@@ -54,7 +57,9 @@ class Greylist extends Auth
         $this->unregister($this->callbacks);
 
         if (false !== $this->result && 'local-list' !== $this->authenticationResults)
+        {
             $this->reportAuth($this->result);
+        }
     }
 
     static function strlencmp($a, $b)

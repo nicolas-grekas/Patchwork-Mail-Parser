@@ -15,11 +15,12 @@ class Qmail extends Bounce
     $recipientRx = '/^<(\S*?@\S*)>(.*)/',
     $reason = '',
     $recipient = '',
+    $recipients = array(),
 
     $callbacks = array('extractBodyRecipient' => T_MAIL_BODY),
     $dependencies = array(
         'Mail\Bounce',
-        'Mail' => 'bodyLine',
+        'Mail' => array('header', 'bodyLine', 'mimePart')
     );
 
     protected function extractBodyRecipient($line)
@@ -27,9 +28,16 @@ class Qmail extends Bounce
         $next_recipient = '';
         $new_reason = '';
 
-        if (0 === strncmp($this->bodyLine, '---', 3)) // line is a boundary between the message and the original email
+        if ($this->mimePart->depth)
         {
-            $this->unregisterAll();
+            $this->unregister($this->callbacks);
+        }
+        else if ($this->recipients && 0 === strncmp(ltrim($this->bodyLine), '---', 3)) // line is a boundary between the message and the original email
+        {
+            $this->unregister($this->callbacks);
+            foreach ($this->recipients as $e => $r) $this->reportBounce($e, $r);
+            $this->recipients = array();
+            return $this->getExclusivity();
         }
         else if (preg_match($this->recipientRx, $this->bodyLine, $m)) // line is an email recipient
         {
@@ -47,7 +55,9 @@ class Qmail extends Bounce
         else return;
 
         if ($this->recipient)
-            $this->reportBounce($this->recipient, rtrim($this->reason));
+        {
+            $this->recipients[$this->recipient] = rtrim($this->reason);
+        }
 
         $this->recipient = $next_recipient;
         $this->reason = $new_reason;
