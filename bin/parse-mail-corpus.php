@@ -10,7 +10,7 @@ use Patchwork\Stream\Parser\Mail\Auth;
 
 foreach ($_SERVER['argv'] as $file)
 {
-    if (false !== $h = fopen($file, 'r'))
+    if (!is_dir($file) && false !== $h = fopen($file, 'r'))
     {
         $parser = new Parser;
         $mail = new Parser\Mail($parser);
