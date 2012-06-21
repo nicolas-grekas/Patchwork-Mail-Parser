@@ -15,11 +15,12 @@ function __autoload($class)
 }
 
 $local_whitelist = array(
+    // List of IP or domain names that are under our direct control
 );
 
 try
 {
-    $db = new PDO('mysql:host=localhost;dbname=bounces', 'root', 'hp');
+    $db = new PDO('mysql:host=localhost;dbname=bounces', 'root', 'root');
     $db = new Patchwork\BouncePdoAdapter($db);
 }
 catch (PDOException $e)

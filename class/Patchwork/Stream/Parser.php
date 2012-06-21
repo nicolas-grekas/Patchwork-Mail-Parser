@@ -1,4 +1,12 @@
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
+/*
+ * Copyright (C) 2012 Nicolas Grekas - p@tchwork.com
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the (at your option):
+ * Apache License v2.0 (http://apache.org/licenses/LICENSE-2.0.txt), or
+ * GNU General Public License v2.0 (http://gnu.org/licenses/gpl-2.0.txt).
+ */
 
 namespace Patchwork\Stream;
 
@@ -82,8 +90,7 @@ class Parser
 
             if (!isset($this->parents[$k]))
             {
-                user_error(get_class($this) . " failed dependency: {$v}", E_USER_WARNING);
-                return;
+                throw new \Exception(get_class($this) . " failed dependency: {$v}");
             }
 
             $parent = $this->dependencies[$v] = $this->parents[$k];
@@ -303,7 +310,7 @@ class Parser
     {
         static $tag = T_STREAM_LINE;
         defined($name) ? $tag = constant($name) : define($name, --$tag);
-        if (isset(self::$tagNames[$tag])) user_error("Overwriting an already created tag value is forbidden ({$name}={$tag})", E_USER_WARNING);
+        if (isset(self::$tagNames[$tag])) throw new \Exception("Overwriting an already created tag value is forbidden ({$name}={$tag})");
         else self::$tagNames[$tag] = $name;
     }
 
