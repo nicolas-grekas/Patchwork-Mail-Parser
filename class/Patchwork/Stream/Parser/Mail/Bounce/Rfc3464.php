@@ -18,6 +18,7 @@ class Rfc3464 extends Bounce
     $callbacks = array(
         'catchBoundary' => T_MAIL_BOUNDARY,
     ),
+    $type, $header, $mimePart,
     $dependencies = array(
         'Mail\Bounce',
         'Mail' => array('type', 'header', 'mimePart'),

@@ -18,6 +18,7 @@ class Qmail extends Bounce
     $recipients = array(),
 
     $callbacks = array('extractBodyRecipient' => T_MAIL_BODY),
+    $header, $bodyLine, $mimePart,
     $dependencies = array(
         'Mail\Bounce',
         'Mail' => array('header', 'bodyLine', 'mimePart')

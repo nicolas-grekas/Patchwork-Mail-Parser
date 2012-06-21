@@ -18,6 +18,7 @@ class Pra extends Parser
         'tagHeader' => T_MAIL_HEADER,
         'unregisterAll' => T_MAIL_BOUNDARY,
     ),
+    $envelope, $header,
     $dependencies = array('Mail' => array('envelope', 'header'));
 
 

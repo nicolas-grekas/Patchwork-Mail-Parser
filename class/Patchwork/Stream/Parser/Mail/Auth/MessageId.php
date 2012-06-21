@@ -27,6 +27,7 @@ class MessageId extends Auth
     $messageId = false,
     $messageIdExistsCallback,
     $callbacks = array('catchMailType' => T_MAIL_BOUNDARY),
+    $header, $mimePart, $bodyLine,
     $dependencies = array(
         'Mail\Auth',
         'Mail' => array('header', 'mimePart', 'bodyLine'),

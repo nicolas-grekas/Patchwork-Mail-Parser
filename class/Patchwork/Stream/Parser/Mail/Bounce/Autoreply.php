@@ -16,6 +16,7 @@ class Autoreply extends Bounce
         'catchAutoReply' => T_MAIL_HEADER,
         'unregisterAll' => T_MAIL_BOUNDARY,
     ),
+    $header,
     $dependencies = array(
         'Mail\Bounce',
         'Mail' => array('header'),

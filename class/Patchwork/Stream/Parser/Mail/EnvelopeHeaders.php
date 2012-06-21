@@ -14,6 +14,7 @@ class EnvelopeHeaders extends Parser
     protected
 
     $callbacks = array('getReturnPath' => T_MAIL_HEADER),
+    $envelope,
     $dependencies = array('Mail' => 'envelope');
 
 

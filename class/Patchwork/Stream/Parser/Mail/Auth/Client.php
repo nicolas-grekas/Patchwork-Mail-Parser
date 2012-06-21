@@ -16,6 +16,7 @@ class Client extends Auth
     $whitelist,
     $authClass = 'whitelist',
     $callbacks = array('testEnvelopeClient' => T_MAIL_BOUNDARY),
+    $envelope,
     $dependencies = array(
         'Mail\Auth',
         'Mail' => 'envelope',

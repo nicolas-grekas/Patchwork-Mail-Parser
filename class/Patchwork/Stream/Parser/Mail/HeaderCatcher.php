@@ -16,6 +16,7 @@ class HeaderCatcher extends Parser
         'catchHeader' => T_MAIL_HEADER,
         'unregisterAll' => T_MAIL_BOUNDARY,
     ),
+    $header,
     $dependencies = array('Mail'=> 'header');
 
 

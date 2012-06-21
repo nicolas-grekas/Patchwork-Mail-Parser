@@ -19,6 +19,7 @@ class ReceivedFor extends Bounce
     $recipient = '',
 
     $callbacks = array('extractReason' => T_MAIL_BODY),
+    $mimePart, $bodyLine,
     $dependencies = array(
         'Mail\Bounce',
         'Mail' => array('mimePart', 'bodyLine'),
