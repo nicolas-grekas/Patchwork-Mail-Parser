@@ -10,7 +10,7 @@
 
 namespace Patchwork\Stream;
 
-define('T_STREAM_LINE', -1); // Generic tag matching any single line of the input stream
+const T_STREAM_LINE = -1; // Generic tag matching any single line of the input stream
 
 /**
  * Patchwork\Stream\Parser is a highly extensible framework
