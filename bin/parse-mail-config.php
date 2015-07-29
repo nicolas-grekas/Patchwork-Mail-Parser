@@ -10,11 +10,7 @@ ini_set('error_log', 'php://stderr');
 error_reporting(E_ALL | E_STRICT);
 function_exists('xdebug_disable') and xdebug_disable();
 
-function __autoload($class)
-{
-    $class = str_replace(array('\\', '_'), array('/', '/'), $class);
-    require dirname(__DIR__).'/class/'.$class.'.php';
-}
+require __DIR__.'/../vendor/autoload.php';
 
 $local_whitelist = array(
     // List of IP or domain names that are under our direct control

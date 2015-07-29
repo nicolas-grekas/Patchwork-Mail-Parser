@@ -8,16 +8,15 @@
     "authors": [
         {
             "name": "Nicolas Grekas",
-            "email": "p@tchwork.com",
-            "role": "Developer"
+            "email": "p@tchwork.com"
         }
     ],
     "require": {
-        "php": ">=5.3.0"
+        "php": ">=5.3.2"
     },
     "autoload": {
-        "psr-0": {
-            "Patchwork": "class/"
+        "psr-4": {
+            "Patchwork\\": "src/Patchwork/"
         }
     }
 }
