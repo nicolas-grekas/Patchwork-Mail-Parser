@@ -1,18 +1,15 @@
 #!/usr/bin/php -q
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
-require __DIR__ . '/parse-mail-config.php';
+require __DIR__.'/parse-mail-config.php';
 
 use Patchwork\Stream\Parser;
 use Patchwork\Stream\Parser\Mail\Bounce;
 use Patchwork\Stream\Parser\Mail\Auth;
 
-
-foreach ($_SERVER['argv'] as $file)
-{
-    if (!is_dir($file) && false !== $h = fopen($file, 'r'))
-    {
-        $parser = new Parser;
+foreach ($_SERVER['argv'] as $file) {
+    if (!is_dir($file) && false !== $h = fopen($file, 'r')) {
+        $parser = new Parser();
         $mail = new Parser\Mail($parser);
         new Parser\Mail\EnvelopeHeaders($parser);
         new Parser\Mail\Pra($parser);
@@ -27,18 +24,15 @@ foreach ($_SERVER['argv'] as $file)
         new Bounce\Exim($parser);
         new Bounce\ReceivedFor($parser);
 
-        file_put_contents('php://stderr', $file . "\n");
+        file_put_contents('php://stderr', $file."\n");
 
         $parser->parseStream($h);
 
         fclose($h);
 
-        if ($e = $parser->getErrors())
-        {
+        if ($e = $parser->getErrors()) {
             file_put_contents('php://stderr', print_r($e, true));
-        }
-        else
-        {
+        } else {
             $mail = $mail->getEnvelope();
             $auth = $auth->getAuthenticationResults();
             $omId = $omId->getMessageId();
@@ -46,10 +40,9 @@ foreach ($_SERVER['argv'] as $file)
 
             $auth['sent-time'] = isset($db) ? $db->getAuthSentTime($mail->recipient, $boun) : null;
 
-            $tail = "\t" . $omId;
+            $tail = "\t".$omId;
 
-            foreach (array('whitelist', 'message-id', 'sent-time') as $test)
-            {
+            foreach (array('whitelist', 'message-id', 'sent-time') as $test) {
                 $tail .= "\t";
                 empty($auth[$test]) || $tail .= $auth[$test];
             }
@@ -57,28 +50,23 @@ foreach ($_SERVER['argv'] as $file)
             $tail .= "\n";
             $echoed = false;
 
-            foreach ($boun as $class => $parser)
-            {
-                foreach ($parser as $parser => $recipient)
-                {
-                    if (null !== $recipient)
-                    {
+            foreach ($boun as $class => $parser) {
+                foreach ($parser as $parser => $recipient) {
+                    if (null !== $recipient) {
                         $echoed = true;
 
-                        if (empty($recipient))
-                        {
+                        if (empty($recipient)) {
                             echo "{$file}\t{$class}\t{$parser}\t\t{$tail}";
-                        }
-                        else foreach ($recipient as $recipient => $reason)
-                        {
-                            echo "{$file}\t{$class}\t{$parser}\t{$recipient}\t{$reason}{$tail}";
+                        } else {
+                            foreach ($recipient as $recipient => $reason) {
+                                echo "{$file}\t{$class}\t{$parser}\t{$recipient}\t{$reason}{$tail}";
+                            }
                         }
                     }
                 }
             }
 
-            if (!$echoed)
-            {
+            if (!$echoed) {
                 echo "{$file}\t\t\t\t{$tail}";
             }
         }

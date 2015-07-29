@@ -1,4 +1,6 @@
-<?php // vi: set fenc=utf-8 ts=4 sw=4 et:
+<?php
+
+// vi: set fenc=utf-8 ts=4 sw=4 et:
 /*
  * Copyright (C) 2012 Nicolas Grekas - p@tchwork.com
  *
@@ -14,12 +16,12 @@ class BouncePdoAdapter
 {
     protected $db;
 
-    function __construct(\PDO $db)
+    public function __construct(\PDO $db)
     {
         $this->db = $db;
     }
 
-    function messageIdExists($message_id)
+    public function messageIdExists($message_id)
     {
         $sql = 'SELECT COUNT(*) FROM postfix_stats WHERE last_sent_hash=?';
         $req = $this->db->prepare($sql);
@@ -30,14 +32,17 @@ class BouncePdoAdapter
         return $sql;
     }
 
-    function getAuthSentTime($sender, $recipients)
+    public function getAuthSentTime($sender, $recipients)
     {
         $sender = array($sender => '');
 
-        foreach ($recipients as $recipients)
-            foreach ($recipients as $recipients)
-                if (null !== $recipients)
+        foreach ($recipients as $recipients) {
+            foreach ($recipients as $recipients) {
+                if (null !== $recipients) {
                     $sender += $recipients;
+                }
+            }
+        }
 
         $sender = array_keys($sender);
         $sender = array_map(array($this->db, 'quote'), $sender);
@@ -45,7 +50,7 @@ class BouncePdoAdapter
         $sql = "SELECT MIN(IF(email={$sender[0]},last_from,last_sent))
                 FROM postfix_stats
                 WHERE email IN ({$sql})
-                HAVING count(*)=" . count($sender);
+                HAVING count(*)=".count($sender);
         $req = $this->db->query($sql);
         $sql = $req->fetchColumn();
         $req->closeCursor();
@@ -53,14 +58,15 @@ class BouncePdoAdapter
         return false === $sql ? null : $sql;
     }
 
-    function recordParseResults($results)
+    public function recordParseResults($results)
     {
-        if (empty($results)) return;
+        if (empty($results)) {
+            return;
+        }
 
         $sql = array();
 
-        foreach ($results as $r)
-        {
+        foreach ($results as $r) {
             $s = array_map(array($this, 'quote'), $r);
             $s = implode(',', $s);
             $sql[] = $s;
@@ -69,15 +75,18 @@ class BouncePdoAdapter
         $r = array_keys($r);
 
         $sql = 'INSERT INTO postfix_log_bounces ('
-            . implode(',', $r) . ") VALUES\n("
-            . implode("),\n(", $sql) . ')';
+            .implode(',', $r).") VALUES\n("
+            .implode("),\n(", $sql).')';
 
         $this->db->query($sql);
     }
 
-    function quote($s)
+    public function quote($s)
     {
-        if (null === $s) return 'NULL';
+        if (null === $s) {
+            return 'NULL';
+        }
+
         return $this->db->quote($s);
     }
 }

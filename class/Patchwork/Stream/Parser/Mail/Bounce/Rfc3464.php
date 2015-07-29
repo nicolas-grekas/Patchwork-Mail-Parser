@@ -1,4 +1,6 @@
-<?php // vi: set fenc=utf-8 ts=4 sw=4 et:
+<?php
+
+// vi: set fenc=utf-8 ts=4 sw=4 et:
 /*
  * Copyright (C) 2012 Nicolas Grekas - p@tchwork.com
  *
@@ -17,46 +19,41 @@ use Patchwork\Stream\Parser\Mail\Bounce;
  */
 class Rfc3464 extends Bounce
 {
-    protected
+    protected $status;
+    protected $recipient;
+    protected $diagnosticCode;
 
-    $status,
-    $recipient,
-    $diagnosticCode,
-
-    $callbacks = array(
+    protected $callbacks = array(
         'catchBoundary' => T_MAIL_BOUNDARY,
-    ),
-    $type, $header, $mimePart,
-    $dependencies = array(
+    );
+    protected $type;
+    protected $header;
+    protected $mimePart;
+    protected $dependencies = array(
         'Mail\Bounce',
         'Mail' => array('type', 'header', 'mimePart'),
     );
-
 
     protected function catchBoundary($line)
     {
         $this->unregister(array(__FUNCTION__ => T_MAIL_BOUNDARY));
         $this->register(array('startDsnPart' => T_MAIL_BOUNDARY));
 
-        if ( 'multipart/report' === $this->type->top
-          && isset($this->type->params['report-type'])
-          && 0 === strcasecmp('delivery-status', $this->type->params['report-type']) )
-        {
+        if ('multipart/report' === $this->type->top && isset($this->type->params['report-type']) && 0 === strcasecmp('delivery-status', $this->type->params['report-type'])) {
             return $this->getExclusivity();
         }
     }
 
     protected function startDsnPart($line)
     {
-        if ('message/delivery-status' === $this->type->top)
-        {
+        if ('message/delivery-status' === $this->type->top) {
             $this->dependencies['Mail']->setNextType($this->type->top);
 
             $this->unregister(array(__FUNCTION__ => T_MAIL_BOUNDARY));
             $this->register(array(
                 'extractReportInfo' => T_MAIL_HEADER,
-                'endReport'  => array(T_MAIL_BOUNDARY, T_MIME_BOUNDARY),
-                'endDsnPart' => T_MIME_BOUNDARY
+                'endReport' => array(T_MAIL_BOUNDARY, T_MIME_BOUNDARY),
+                'endDsnPart' => T_MIME_BOUNDARY,
             ));
 
             return $this->getExclusivity();
@@ -65,34 +62,33 @@ class Rfc3464 extends Bounce
 
     protected function extractReportInfo($line)
     {
-        switch ($this->header->name)
-        {
-        case 'status':
-            $this->status = $this->header->value;
-            break;
-        case 'final-recipient':
-            if ($this->recipient) break;
-        case 'original-recipient':
-            if ('<' === substr($this->header->value, 0, 1))
-            {
-                $this->recipient = trim($this->header->value, '<>');
-            }
-            else
-            {
-                $v = explode(";", $this->header->value);
-                $this->recipient = trim($v[1]);
-            }
-            break;
-        case 'diagnostic-code':
-            $this->diagnosticCode = $this->header->value;
-            break;
+        switch ($this->header->name) {
+            case 'status':
+                $this->status = $this->header->value;
+                break;
+
+            case 'final-recipient':
+                if ($this->recipient) {
+                    break;
+                }
+            case 'original-recipient':
+                if ('<' === substr($this->header->value, 0, 1)) {
+                    $this->recipient = trim($this->header->value, '<>');
+                } else {
+                    $v = explode(';', $this->header->value);
+                    $this->recipient = trim($v[1]);
+                }
+                break;
+
+            case 'diagnostic-code':
+                $this->diagnosticCode = $this->header->value;
+                break;
         }
     }
 
     protected function endReport($line)
     {
-        if (isset($this->recipient))
-        {
+        if (isset($this->recipient)) {
             $this->reportBounce($this->recipient, "{$this->diagnosticCode} (#{$this->status})");
         }
 

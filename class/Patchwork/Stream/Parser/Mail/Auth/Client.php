@@ -1,4 +1,6 @@
-<?php // vi: set fenc=utf-8 ts=4 sw=4 et:
+<?php
+
+// vi: set fenc=utf-8 ts=4 sw=4 et:
 /*
  * Copyright (C) 2012 Nicolas Grekas - p@tchwork.com
  *
@@ -19,18 +21,16 @@ use Patchwork\Stream\Parser\Mail\Auth;
  */
 class Client extends Auth
 {
-    protected
-
-    $whitelist,
-    $authClass = 'whitelist',
-    $callbacks = array('testEnvelopeClient' => T_MAIL_BOUNDARY),
-    $envelope,
-    $dependencies = array(
+    protected $whitelist;
+    protected $authClass = 'whitelist';
+    protected $callbacks = array('testEnvelopeClient' => T_MAIL_BOUNDARY);
+    protected $envelope;
+    protected $dependencies = array(
         'Mail\Auth',
         'Mail' => 'envelope',
     );
 
-    function __construct(Parser $parent, $whitelist = null)
+    public function __construct(Parser $parent, $whitelist = null)
     {
         $this->whitelist = $whitelist;
         parent::__construct($parent);
@@ -41,16 +41,14 @@ class Client extends Auth
     {
         $this->unregister($this->callbacks);
 
-        if ('127.0.0.1' === $this->envelope->clientIp)
-        {
+        if ('127.0.0.1' === $this->envelope->clientIp) {
             $this->reportAuth('local-host');
-        }
-        else foreach ($this->whitelist as $w)
-        {
-            if ($w == $this->envelope->clientIp || $w == $this->envelope->clientHostname)
-            {
-                $this->reportAuth('local-list');
-                break;
+        } else {
+            foreach ($this->whitelist as $w) {
+                if ($w == $this->envelope->clientIp || $w == $this->envelope->clientHostname) {
+                    $this->reportAuth('local-list');
+                    break;
+                }
             }
         }
     }

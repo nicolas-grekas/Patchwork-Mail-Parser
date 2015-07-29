@@ -1,4 +1,6 @@
-<?php // vi: set fenc=utf-8 ts=4 sw=4 et:
+<?php
+
+// vi: set fenc=utf-8 ts=4 sw=4 et:
 /*
  * Copyright (C) 2012 Nicolas Grekas - p@tchwork.com
  *
@@ -17,24 +19,20 @@ use Patchwork\Stream\Parser\Mail\Bounce;
  */
 class Autoreply extends Bounce
 {
-    protected
-
-    $bounceClass = 'vacation',
-    $callbacks = array(
+    protected $bounceClass = 'vacation';
+    protected $callbacks = array(
         'catchAutoReply' => T_MAIL_HEADER,
         'unregisterAll' => T_MAIL_BOUNDARY,
-    ),
-    $header,
-    $dependencies = array(
+    );
+    protected $header;
+    protected $dependencies = array(
         'Mail\Bounce',
         'Mail' => array('header'),
     );
 
-
     protected function catchAutoReply($line)
     {
-        if ('auto-submitted' === $this->header->name && false !== stripos($line, 'vacation'))
-        {
+        if ('auto-submitted' === $this->header->name && false !== stripos($line, 'vacation')) {
             return $this->getExclusivity();
         }
     }

@@ -1,4 +1,6 @@
-<?php // vi: set fenc=utf-8 ts=4 sw=4 et:
+<?php
+
+// vi: set fenc=utf-8 ts=4 sw=4 et:
 /*
  * Copyright (C) 2012 Nicolas Grekas - p@tchwork.com
  *
@@ -17,13 +19,10 @@ use Patchwork\Stream\Parser;
  */
 class StreamForwarder extends Parser
 {
-    protected
+    protected $stream;
+    protected $callbacks = array('writeLine' => T_STREAM_LINE);
 
-    $stream,
-    $callbacks = array('writeLine' => T_STREAM_LINE);
-
-
-    function __construct(parent $parent, $stream)
+    public function __construct(parent $parent, $stream)
     {
         parent::__construct($parent);
         $this->stream = $stream;

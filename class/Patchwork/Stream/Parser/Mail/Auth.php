@@ -1,4 +1,6 @@
-<?php // vi: set fenc=utf-8 ts=4 sw=4 et:
+<?php
+
+// vi: set fenc=utf-8 ts=4 sw=4 et:
 /*
  * Copyright (C) 2012 Nicolas Grekas - p@tchwork.com
  *
@@ -19,25 +21,23 @@ use Patchwork\Stream\Parser;
  */
 class Auth extends Parser
 {
-    protected
+    protected $authClass = false;
+    protected $authenticationResults = array();
 
-    $authClass = false,
-    $authenticationResults = array();
-
-
-    function __construct(parent $parent)
+    public function __construct(parent $parent)
     {
         parent::__construct($parent);
 
-        if (__CLASS__ !== get_class($this))
-        {
-            isset($this->dependencies['Mail\Auth']->authenticationResults)
-                ? $this->authenticationResults =& $this->dependencies['Mail\Auth']->authenticationResults[$this->authClass]
-                : user_error(__CLASS__ . ' dependency is not loaded');
+        if (__CLASS__ !== get_class($this)) {
+            if (isset($this->dependencies['Mail\Auth']->authenticationResults)) {
+                $this->authenticationResults = &$this->dependencies['Mail\Auth']->authenticationResults[$this->authClass];
+            } else {
+                user_error(__CLASS__.' dependency is not loaded');
+            }
         }
     }
 
-    function getAuthenticationResults()
+    public function getAuthenticationResults()
     {
         return $this->authenticationResults;
     }

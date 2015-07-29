@@ -1,4 +1,6 @@
-<?php // vi: set fenc=utf-8 ts=4 sw=4 et:
+<?php
+
+// vi: set fenc=utf-8 ts=4 sw=4 et:
 
 unset($_SERVER['argv'][0]);
 
@@ -11,20 +13,17 @@ function_exists('xdebug_disable') and xdebug_disable();
 function __autoload($class)
 {
     $class = str_replace(array('\\', '_'), array('/', '/'), $class);
-    require dirname(__DIR__) . '/class/' . $class . '.php';
+    require dirname(__DIR__).'/class/'.$class.'.php';
 }
 
 $local_whitelist = array(
     // List of IP or domain names that are under our direct control
 );
 
-try
-{
+try {
     $db = new PDO('mysql:host=localhost;dbname=bounces', 'root', 'root');
     $db = new Patchwork\BouncePdoAdapter($db);
-}
-catch (PDOException $e)
-{
+} catch (PDOException $e) {
     user_error($e->getMessage(), E_USER_WARNING);
     unset($db);
 }

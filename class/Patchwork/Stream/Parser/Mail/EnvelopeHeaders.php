@@ -1,4 +1,6 @@
-<?php // vi: set fenc=utf-8 ts=4 sw=4 et:
+<?php
+
+// vi: set fenc=utf-8 ts=4 sw=4 et:
 /*
  * Copyright (C) 2012 Nicolas Grekas - p@tchwork.com
  *
@@ -19,20 +21,17 @@ use Patchwork\Stream\Parser;
  */
 class EnvelopeHeaders extends Parser
 {
-    protected
-
-    $callbacks = array('getReturnPath' => T_MAIL_HEADER),
-    $envelope,
-    $dependencies = array('Mail' => 'envelope');
-
+    protected $callbacks = array('getReturnPath' => T_MAIL_HEADER);
+    protected $envelope;
+    protected $dependencies = array('Mail' => 'envelope');
 
     protected function getReturnPath($line)
     {
         $this->unregister(array(__FUNCTION__ => T_MAIL_HEADER));
 
-        if (!preg_match('/^Return-Path: <(.*)>/', $line, $m))
-        {
+        if (!preg_match('/^Return-Path: <(.*)>/', $line, $m)) {
             $this->setError('No Return-Path found', E_USER_WARNING);
+
             return;
         }
 
@@ -44,9 +43,9 @@ class EnvelopeHeaders extends Parser
     {
         $this->unregister(array(__FUNCTION__ => T_MAIL_HEADER));
 
-        if (!preg_match('/^Delivered-To: (.*)/', $line, $m))
-        {
+        if (!preg_match('/^Delivered-To: (.*)/', $line, $m)) {
             $this->setError('No Delivered-To found', E_USER_WARNING);
+
             return;
         }
 
@@ -58,15 +57,14 @@ class EnvelopeHeaders extends Parser
     {
         $this->unregister(array(__FUNCTION__ => T_MAIL_HEADER));
 
-        if (preg_match('/^Received: from\s+(.*?)\s+\((.*?)\s+\[(.*?)\]\)(?:[\s\S]*\sfor (\S*?@\S*)[^@]*$)?/', $line, $m))
-        {
+        if (preg_match('/^Received: from\s+(.*?)\s+\((.*?)\s+\[(.*?)\]\)(?:[\s\S]*\sfor (\S*?@\S*)[^@]*$)?/', $line, $m)) {
             $this->envelope->clientIp = $m[3];
             $this->envelope->clientHelo = $m[1];
             $this->envelope->clientHostname = $m[2];
-            empty($m[4]) || $this->envelope->recipient = trim($m[4], '<>;');
-        }
-        else
-        {
+            if (!empty($m[4])) {
+                $this->envelope->recipient = trim($m[4], '<>;');
+            }
+        } else {
             $this->envelope->clientIp = '127.0.0.1';
             $this->envelope->clientHelo = 'localhost';
             $this->envelope->clientHostnamer = 'localhost';

@@ -1,4 +1,6 @@
-<?php // vi: set fenc=utf-8 ts=4 sw=4 et:
+<?php
+
+// vi: set fenc=utf-8 ts=4 sw=4 et:
 /*
  * Copyright (C) 2012 Nicolas Grekas - p@tchwork.com
  *
@@ -29,20 +31,19 @@ use Patchwork\Stream\Parser\Mail\Auth;
  */
 class MessageId extends Auth
 {
-    protected
-
-    $authClass = 'message-id',
-    $messageId = false,
-    $messageIdExistsCallback,
-    $callbacks = array('catchMailType' => T_MAIL_BOUNDARY),
-    $header, $mimePart, $bodyLine,
-    $dependencies = array(
+    protected $authClass = 'message-id';
+    protected $messageId = false;
+    protected $messageIdExistsCallback;
+    protected $callbacks = array('catchMailType' => T_MAIL_BOUNDARY);
+    protected $header;
+    protected $mimePart;
+    protected $bodyLine;
+    protected $dependencies = array(
         'Mail\Auth',
         'Mail' => array('header', 'mimePart', 'bodyLine'),
     );
 
-
-    function __construct(Parser $parent, $message_id_exists_callback)
+    public function __construct(Parser $parent, $message_id_exists_callback)
     {
         parent::__construct($parent);
         $this->messageIdExistsCallback = $message_id_exists_callback;
@@ -61,8 +62,7 @@ class MessageId extends Auth
 
     protected function catchMessage($line)
     {
-        if (0 === strncmp(ltrim($this->bodyLine), '---', 3))
-        {
+        if (0 === strncmp(ltrim($this->bodyLine), '---', 3)) {
             $this->unregister(array(__FUNCTION__ => T_MAIL_BODY));
             $this->register(array('catchMessageId' => T_MAIL_BODY));
         }
@@ -70,9 +70,7 @@ class MessageId extends Auth
 
     protected function catchMessageId($line)
     {
-        if ( 0 === strncasecmp($this->bodyLine, 'Message-Id:', 11)
-          && preg_match('/^Message-Id:\s+<(.*)>/i', $this->bodyLine, $m) )
-        {
+        if (0 === strncasecmp($this->bodyLine, 'Message-Id:', 11) && preg_match('/^Message-Id:\s+<(.*)>/i', $this->bodyLine, $m)) {
             $this->unregister(array(__FUNCTION__ => T_MAIL_BODY));
             $this->reportMessageId($m[1]);
         }
@@ -80,8 +78,7 @@ class MessageId extends Auth
 
     protected function catchMimeId($line)
     {
-        if ('message-id' === $this->header->name)
-        {
+        if ('message-id' === $this->header->name) {
             $this->unregister(array(__FUNCTION__ => T_MAIL_HEADER));
             $this->reportMessageId(trim($this->header->value, '><'));
         }
@@ -91,13 +88,12 @@ class MessageId extends Auth
     {
         $this->messageId = $message_id;
 
-        if ($this->messageIdExistsCallback)
-        {
+        if ($this->messageIdExistsCallback) {
             $this->reportAuth((int) (bool) call_user_func($this->messageIdExistsCallback, $message_id));
         }
     }
 
-    function getMessageId()
+    public function getMessageId()
     {
         return $this->messageId;
     }

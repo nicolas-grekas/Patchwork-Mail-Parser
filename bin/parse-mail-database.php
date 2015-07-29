@@ -1,20 +1,17 @@
 #!/usr/bin/php -q
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
-require __DIR__ . '/parse-mail-config.php';
+require __DIR__.'/parse-mail-config.php';
 
 use Patchwork\Stream\Parser;
 use Patchwork\Stream\Parser\Mail\Bounce;
 use Patchwork\Stream\Parser\Mail\Auth;
 
-
-foreach ($_SERVER['argv'] as $file)
-{
-    if (false !== $h = fopen($file, 'r'))
-    {
+foreach ($_SERVER['argv'] as $file) {
+    if (false !== $h = fopen($file, 'r')) {
         $sendmail = proc_open("exec /usr/sbin/sendmail -i -f '<>' postmaster 2> /dev/null", array(0 => array('pipe', 'r')), $sendmail_pipes);
 
-        $parser = new Parser;
+        $parser = new Parser();
         new Parser\StreamForwarder($parser, $sendmail_pipes[0]);
         $mail = new Parser\Mail($parser);
         new Parser\Mail\EnvelopeHeaders($parser);
@@ -35,8 +32,7 @@ foreach ($_SERVER['argv'] as $file)
 
         fclose($h);
 
-        if ($e = $parser->getErrors())
-        {
+        if ($e = $parser->getErrors()) {
             file_put_contents('php://stderr', print_r($e, true));
         }
 
@@ -56,42 +52,43 @@ foreach ($_SERVER['argv'] as $file)
             'bounced_sender' => $mail->recipient,
         );
 
-        foreach ($auth as $k => $v) $result_const['auth_' . strtr($k, '-', '_')] = $v;
+        foreach ($auth as $k => $v) {
+            $result_const['auth_'.strtr($k, '-', '_')] = $v;
+        }
 
         $filled = 0;
 
-        foreach ($boun as $class => $parser)
-        {
-            foreach ($parser as $parser => $recipient)
-            {
-                if (null !== $recipient)
-                {
-                    if (empty($recipient))
-                    {
+        foreach ($boun as $class => $parser) {
+            foreach ($parser as $parser => $recipient) {
+                if (null !== $recipient) {
+                    if (empty($recipient)) {
                         $filled || $filled = 1;
 
                         $results[] = $result_const + array(
                             'bounce_type' => $class,
                             'bounce_parser' => $parser,
                         );
-                    }
-                    else foreach ($recipient as $recipient => $reason)
-                    {
-                        $filled = 2;
+                    } else {
+                        foreach ($recipient as $recipient => $reason) {
+                            $filled = 2;
 
-                        $results[] = $result_const + array(
+                            $results[] = $result_const + array(
                             'bounce_type' => $class,
                             'bounce_parser' => $parser,
                             'bounce_reason' => $reason,
                             'bounced_recipient' => $recipient,
                         );
+                        }
                     }
                 }
             }
         }
 
-        if ($filled) proc_terminate($sendmail);
-        else $results[] = $result_const;
+        if ($filled) {
+            proc_terminate($sendmail);
+        } else {
+            $results[] = $result_const;
+        }
 
         fclose($sendmail_pipes[0]);
         proc_close($sendmail);

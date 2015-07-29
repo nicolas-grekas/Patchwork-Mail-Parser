@@ -1,4 +1,6 @@
-<?php // vi: set fenc=utf-8 ts=4 sw=4 et:
+<?php
+
+// vi: set fenc=utf-8 ts=4 sw=4 et:
 /*
  * Copyright (C) 2012 Nicolas Grekas - p@tchwork.com
  *
@@ -20,31 +22,27 @@ use Patchwork\Stream\Parser\Mail;
  */
 class Pra extends Parser
 {
-    protected
-
-    $callbacks = array(
+    protected $callbacks = array(
         'tagHeader' => T_MAIL_HEADER,
         'unregisterAll' => T_MAIL_BOUNDARY,
-    ),
-    $envelope, $header,
-    $dependencies = array('Mail' => array('envelope', 'header'));
-
+    );
+    protected $envelope;
+    protected $header;
+    protected $dependencies = array('Mail' => array('envelope', 'header'));
 
     protected function tagHeader($line)
     {
-        switch ($this->header->name)
-        {
-        case 'resent-sender':
-        case 'resent-from':
-        case 'sender':
-        case 'from':
-            $pra = Mail::parseAddresses($this->header->value);
+        switch ($this->header->name) {
+            case 'resent-sender':
+            case 'resent-from':
+            case 'sender':
+            case 'from':
+                $pra = Mail::parseAddresses($this->header->value);
 
-            if (1 === count($pra))
-            {
-                $this->envelope->pra = $pra[0];
-                $this->unregister($this->callbacks);
-            }
+                if (1 === count($pra)) {
+                    $this->envelope->pra = $pra[0];
+                    $this->unregister($this->callbacks);
+                }
         }
     }
 }

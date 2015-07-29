@@ -1,4 +1,6 @@
-<?php // vi: set fenc=utf-8 ts=4 sw=4 et:
+<?php
+
+// vi: set fenc=utf-8 ts=4 sw=4 et:
 /*
  * Copyright (C) 2012 Nicolas Grekas - p@tchwork.com
  *
@@ -17,15 +19,15 @@ use Patchwork\Stream\Parser;
  */
 class Dumper extends Parser
 {
-    protected
+    protected $width = 50;
+    protected $callbacks = array('logLine' => T_STREAM_LINE);
 
-    $width = 50,
-    $callbacks = array('logLine' => T_STREAM_LINE);
-
-    function __construct(parent $parent, $width = null)
+    public function __construct(parent $parent, $width = null)
     {
         parent::__construct($parent);
-        isset($width) && $this->width = $width;
+        if (isset($width)) {
+            $this->width = $width;
+        }
     }
 
     protected function logLine($line, $t)
@@ -36,7 +38,9 @@ class Dumper extends Parser
         echo sprintf("% 5d: % -{$this->width}s", $this->lineNumber, $line);
 
         unset($t[T_STREAM_LINE]);
-        foreach ($t as $t) echo ' ', self::getTagName($t);
+        foreach ($t as $t) {
+            echo ' ', self::getTagName($t);
+        }
 
         echo "\n";
     }

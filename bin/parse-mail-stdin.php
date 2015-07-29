@@ -1,14 +1,13 @@
 #!/usr/bin/php -q
 <?php // vi: set fenc=utf-8 ts=4 sw=4 et:
 
-require __DIR__ . '/parse-mail-config.php';
+require __DIR__.'/parse-mail-config.php';
 
 use Patchwork\Stream\Parser;
 use Patchwork\Stream\Parser\Mail\Bounce;
 use Patchwork\Stream\Parser\Mail\Auth;
 
-
-$parser = new Parser;
+$parser = new Parser();
 $mail = new Parser\Mail($parser);
 new Parser\Mail\EnvelopeHeaders($parser);
 new Parser\Mail\Pra($parser);
@@ -27,12 +26,9 @@ new Bounce\ReceivedFor($parser);
 
 $parser->parseStream(STDIN);
 
-if ($e = $parser->getErrors())
-{
+if ($e = $parser->getErrors()) {
     print_r($e);
-}
-else
-{
+} else {
     $mail = $mail->getEnvelope();
     $auth = $auth->getAuthenticationResults();
     $boun = $boun->getBounceReports();

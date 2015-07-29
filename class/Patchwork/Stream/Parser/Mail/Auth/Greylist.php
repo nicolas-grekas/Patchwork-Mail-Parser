@@ -1,4 +1,6 @@
-<?php // vi: set fenc=utf-8 ts=4 sw=4 et:
+<?php
+
+// vi: set fenc=utf-8 ts=4 sw=4 et:
 /*
  * Copyright (C) 2012 Nicolas Grekas - p@tchwork.com
  *
@@ -20,23 +22,20 @@ use Patchwork\Stream\Parser\Mail\Auth;
  */
 class Greylist extends Auth
 {
-    protected
-
-    $result = false,
-    $authClass = 'whitelist',
-    $pattern = array(
+    protected $result = false;
+    protected $authClass = 'whitelist';
+    protected $pattern = array(
         'Local Mail' => 'local-list',
         'Sender IP whitelisted' => 'local-list',
         'Sender IP whitelisted by DNSRBL' => 'external-list',
-    ),
-    $callbacks = array(
+    );
+    protected $callbacks = array(
         'catchGreylist' => T_MAIL_HEADER,
         'registerResults' => T_MAIL_BOUNDARY,
-    ),
-    $dependencies = array('Mail\Auth');
+    );
+    protected $dependencies = array('Mail\Auth');
 
-
-    function __construct(Parser $parent)
+    public function __construct(Parser $parent)
     {
         uksort($this->pattern, array(__CLASS__, 'strlencmp'));
         parent::__construct($parent);
@@ -45,14 +44,11 @@ class Greylist extends Auth
 
     protected function catchGreylist($line)
     {
-        if (0 === strncasecmp($line, 'X-Greylist: ', 12))
-        {
+        if (0 === strncasecmp($line, 'X-Greylist: ', 12)) {
             $this->result = false;
 
-            foreach ($this->pattern as $p => $r)
-            {
-                if (12 === strpos($line, $p))
-                {
+            foreach ($this->pattern as $p => $r) {
+                if (12 === strpos($line, $p)) {
                     $this->result = $r;
                     break;
                 }
@@ -64,13 +60,12 @@ class Greylist extends Auth
     {
         $this->unregister($this->callbacks);
 
-        if (false !== $this->result && 'local-list' !== $this->authenticationResults)
-        {
+        if (false !== $this->result && 'local-list' !== $this->authenticationResults) {
             $this->reportAuth($this->result);
         }
     }
 
-    static function strlencmp($a, $b)
+    public static function strlencmp($a, $b)
     {
         return strlen($b) - strlen($a);
     }

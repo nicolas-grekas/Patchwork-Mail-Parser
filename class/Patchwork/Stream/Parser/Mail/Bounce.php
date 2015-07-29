@@ -1,4 +1,6 @@
-<?php // vi: set fenc=utf-8 ts=4 sw=4 et:
+<?php
+
+// vi: set fenc=utf-8 ts=4 sw=4 et:
 /*
  * Copyright (C) 2012 Nicolas Grekas - p@tchwork.com
  *
@@ -24,27 +26,25 @@ Parser::createTag('T_BOUNCE_EXCLUSIVITY');
  */
 class Bounce extends Parser
 {
-    protected
+    protected $bounceClass = 'dsn';
+    protected $bounceReports = array();
+    protected $hasExclusivity = false;
 
-    $bounceClass = 'dsn',
-    $bounceReports = array(),
-    $hasExclusivity = false;
-
-
-    function __construct(parent $parent)
+    public function __construct(parent $parent)
     {
         parent::__construct($parent);
         $this->register(array('catchBounceExclusivity' => T_BOUNCE_EXCLUSIVITY));
 
-        if (__CLASS__ !== $c = get_class($this))
-        {
-            isset($this->dependencies['Mail\Bounce']->bounceReports)
-                ? $this->bounceReports =& $this->dependencies['Mail\Bounce']->bounceReports[$this->bounceClass][$c]
-                : user_error(__CLASS__ . ' dependency is not loaded');
+        if (__CLASS__ !== $c = get_class($this)) {
+            if (isset($this->dependencies['Mail\Bounce']->bounceReports)) {
+                $this->bounceReports = &$this->dependencies['Mail\Bounce']->bounceReports[$this->bounceClass][$c];
+            } else {
+                user_error(__CLASS__.' dependency is not loaded');
+            }
         }
     }
 
-    function getBounceReports()
+    public function getBounceReports()
     {
         return $this->bounceReports;
     }
@@ -52,13 +52,18 @@ class Bounce extends Parser
     protected function getExclusivity()
     {
         $this->hasExclusivity = true;
-        is_array($this->bounceReports) || $this->bounceReports = array();
+        if (!is_array($this->bounceReports)) {
+            $this->bounceReports = array();
+        }
+
         return T_BOUNCE_EXCLUSIVITY;
     }
 
     protected function catchBounceExclusivity()
     {
-        $this->hasExclusivity || $this->unregisterAll();
+        if (!$this->hasExclusivity) {
+            $this->unregisterAll();
+        }
     }
 
     protected function reportBounce($recipient, $reason)

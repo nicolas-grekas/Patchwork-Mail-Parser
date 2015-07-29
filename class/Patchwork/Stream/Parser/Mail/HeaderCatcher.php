@@ -1,4 +1,6 @@
-<?php // vi: set fenc=utf-8 ts=4 sw=4 et:
+<?php
+
+// vi: set fenc=utf-8 ts=4 sw=4 et:
 /*
  * Copyright (C) 2012 Nicolas Grekas - p@tchwork.com
  *
@@ -17,36 +19,33 @@ use Patchwork\Stream\Parser;
  */
 class HeaderCatcher extends Parser
 {
-    protected
-
-    $caughtHeaders = array(),
-    $callbacks = array(
+    protected $caughtHeaders = array();
+    protected $callbacks = array(
         'catchHeader' => T_MAIL_HEADER,
         'unregisterAll' => T_MAIL_BOUNDARY,
-    ),
-    $header,
-    $dependencies = array('Mail'=> 'header');
+    );
+    protected $header;
+    protected $dependencies = array('Mail' => 'header');
 
-
-    function __construct(parent $parent, array $headers)
+    public function __construct(parent $parent, array $headers)
     {
-        if ($headers)
-        {
+        if ($headers) {
             parent::__construct($parent);
-            foreach ($headers as $h) $this->caughtHeaders[$h] = false;
+            foreach ($headers as $h) {
+                $this->caughtHeaders[$h] = false;
+            }
         }
     }
 
     protected function catchHeader()
     {
-        if (isset($this->caughtHeaders[$this->header->name]))
-        {
+        if (isset($this->caughtHeaders[$this->header->name])) {
             $this->caughtHeaders[$this->header->name] = $this->header->value;
         }
     }
 
-    function getCaughtHeaders()
+    public function getCaughtHeaders()
     {
-       return $this->caughtHeaders;
+        return $this->caughtHeaders;
     }
 }
