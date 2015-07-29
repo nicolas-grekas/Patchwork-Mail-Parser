@@ -46,7 +46,7 @@ class Rfc3464 extends Bounce
 
     protected function startDsnPart($line)
     {
-        if ('message/delivery-status' === $this->type->top) {
+        if ('message/delivery-status' === $this->type->top || 'message/global-delivery-status' === $this->type->top) {
             $this->dependencies['Mail']->setNextType($this->type->top);
 
             $this->unregister(array(__FUNCTION__ => T_MAIL_BOUNDARY));
