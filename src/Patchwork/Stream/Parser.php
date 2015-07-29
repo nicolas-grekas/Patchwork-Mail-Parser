@@ -1,6 +1,4 @@
 <?php
-
-// vi: set fenc=utf-8 ts=4 sw=4 et:
 /*
  * Copyright (C) 2012 Nicolas Grekas - p@tchwork.com
  *
@@ -45,7 +43,9 @@ class Parser
     {
         $parent || $parent = __CLASS__ === get_class($this) ? $this : new self();
 
-        $this->serviceName || $this->serviceName = get_class($this);
+        if (!$this->serviceName) {
+            $this->serviceName = get_class($this);
+        }
         $this->dependencies = (array) $this->dependencies;
         $this->parent = $parent;
 
@@ -231,7 +231,9 @@ class Parser
 
     private function callbackRegisteryApply($method, $register)
     {
-        is_string($method) && $method = array($method => array(T_STREAM_LINE => false));
+        if (is_string($method)) {
+            $method = array($method => array(T_STREAM_LINE => false));
+        }
 
         foreach ($method as $method => $tag) {
             if (is_int($method)) {
@@ -308,9 +310,14 @@ class Parser
     public static function createTag($name)
     {
         static $tag = T_STREAM_LINE;
-        defined($name) ? $tag = constant($name) : define($name, --$tag);
+
+        if (defined($name)) {
+            $tag = constant($name);
+        } else {
+            define($name, --$tag);
+        }
         if (isset(self::$tagNames[$tag])) {
-            throw new \Exception("Overwriting an already created tag value is forbidden ({$name}={$tag})");
+            throw new \LogicException("Overwriting an already created tag value is forbidden ({$name}={$tag})");
         } else {
             self::$tagNames[$tag] = $name;
         }

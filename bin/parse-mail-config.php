@@ -1,7 +1,5 @@
 <?php
 
-// vi: set fenc=utf-8 ts=4 sw=4 et:
-
 unset($_SERVER['argv'][0]);
 
 ini_set('display_errors', false);

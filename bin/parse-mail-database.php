@@ -1,5 +1,5 @@
 #!/usr/bin/php -q
-<?php // vi: set fenc=utf-8 ts=4 sw=4 et:
+<?php
 
 require __DIR__.'/parse-mail-config.php';
 

@@ -1,6 +1,4 @@
 <?php
-
-// vi: set fenc=utf-8 ts=4 sw=4 et:
 /*
  * Copyright (C) 2012 Nicolas Grekas - p@tchwork.com
  *
@@ -29,7 +27,7 @@ class Auth extends Parser
         parent::__construct($parent);
 
         if (__CLASS__ !== get_class($this)) {
-            if (isset($this->dependencies['Mail\Auth']->authenticationResults)) {
+            if (isset($this->dependencies['Mail\Auth']->authenticationResults) && $this->dependencies['Mail\Auth'] instanceof self) {
                 $this->authenticationResults = &$this->dependencies['Mail\Auth']->authenticationResults[$this->authClass];
             } else {
                 user_error(__CLASS__.' dependency is not loaded');

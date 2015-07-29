@@ -1,6 +1,4 @@
 <?php
-
-// vi: set fenc=utf-8 ts=4 sw=4 et:
 /*
  * Copyright (C) 2012 Nicolas Grekas - p@tchwork.com
  *
@@ -62,6 +60,8 @@ class Mail extends Parser
         'registerType' => T_MAIL_BOUNDARY,
         'tagMailHeader' => T_STREAM_LINE,
     );
+
+    private $nextHeader = array();
 
     /**
      * Initializes the parser, and the mail envelope if already known.
@@ -130,15 +130,13 @@ class Mail extends Parser
             return $this->tagMailBoundary($line, $matches, $tags);
         }
 
-        static $nextHeader = array();
-
-        $nextHeader[] = $line;
+        $this->nextHeader[] = $line;
 
         if (!isset($this->nextLine[0]) || !(' ' === $this->nextLine[0] || "\t" === $this->nextLine[0])) {
-            $line = implode('', $nextHeader);
-            $nextHeader = array();
+            $line = $l = implode('', $nextHeader);
+            $this->nextHeader = array();
 
-            return preg_match('/^[\x21-\x39\x3B-\x7E]+:/', $line) ? T_MAIL_HEADER : T_MAIL_MALFORMED;
+            return preg_match('/^[\x21-\x39\x3B-\x7E]+:/', $l) ? T_MAIL_HEADER : T_MAIL_MALFORMED;
         }
 
         return false;

@@ -1,6 +1,4 @@
 <?php
-
-// vi: set fenc=utf-8 ts=4 sw=4 et:
 /*
  * Copyright (C) 2012 Nicolas Grekas - p@tchwork.com
  *
@@ -55,7 +53,9 @@ class Qmail extends Bounce
             // line is an email recipient
 
             $next_recipient = $m[1];
-            isset($m[2]) && $new_reason = ltrim($m[2], ': ');
+            if (isset($m[2])) {
+                $new_reason = ltrim($m[2], ': ');
+            }
         } elseif ($this->recipient) {
             // line is considered as a reason or an ending line
 

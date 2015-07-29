@@ -1,6 +1,4 @@
 <?php
-
-// vi: set fenc=utf-8 ts=4 sw=4 et:
 /*
  * Copyright (C) 2012 Nicolas Grekas - p@tchwork.com
  *
@@ -36,7 +34,7 @@ class Bounce extends Parser
         $this->register(array('catchBounceExclusivity' => T_BOUNCE_EXCLUSIVITY));
 
         if (__CLASS__ !== $c = get_class($this)) {
-            if (isset($this->dependencies['Mail\Bounce']->bounceReports)) {
+            if (isset($this->dependencies['Mail\Bounce']->bounceReports) && $this->dependencies['Mail\Bounce'] instanceof self) {
                 $this->bounceReports = &$this->dependencies['Mail\Bounce']->bounceReports[$this->bounceClass][$c];
             } else {
                 user_error(__CLASS__.' dependency is not loaded');
@@ -52,9 +50,6 @@ class Bounce extends Parser
     protected function getExclusivity()
     {
         $this->hasExclusivity = true;
-        if (!is_array($this->bounceReports)) {
-            $this->bounceReports = array();
-        }
 
         return T_BOUNCE_EXCLUSIVITY;
     }
